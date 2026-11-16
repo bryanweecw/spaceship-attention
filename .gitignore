@@ -31,3 +31,10 @@ token-usage.log
 
 # written by scripts/capture
 .capture
+
+# Local inference dependencies and weights (recreated by scripts/setup-local.sh)
+/vendor/
+/build/
+/models/
+__pycache__/
+.capture-local/

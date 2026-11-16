@@ -1,0 +1,13 @@
+{
+  "comparison": "Identical prompt (38 tokens), identical neutral prefill, greedy decoding. First choice: \" the\" (36.37%) baseline; \" the\" (34.48%) steered. Download JSON for both distributions and per-step biases.",
+  "live_bias_values": [
+    2,
+    -2
+  ],
+  "live_session_count": 1,
+  "stop": "passed",
+  "horizontal_overflow_390px": false,
+  "browser_errors": [],
+  "cross_origin_status": 403,
+  "stale_session_status": 409
+}

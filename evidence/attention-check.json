@@ -1,0 +1,180 @@
+{
+  "model": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+  "prompt": "The spaceship carried two things: a greenhouse full of roses and a damaged engine. Mira loved the garden, but the mechanic worried about the reactor. When she opened the hatch, she found",
+  "positions": [7, 10, 20],
+  "neutral_equals_baseline": true,
+  "reset_restores_baseline": true,
+  "baseline": {
+    "token": 279,
+    "text": " the",
+    "done": false,
+    "top": [
+      {
+        "id": 279,
+        "text": " the",
+        "probability": 0.3637372313084896
+      },
+      {
+        "id": 264,
+        "text": " a",
+        "probability": 0.11547210106587019
+      },
+      {
+        "id": 700,
+        "text": " out",
+        "probability": 0.08288661463027604
+      },
+      {
+        "id": 429,
+        "text": " that",
+        "probability": 0.08017160265619819
+      },
+      {
+        "id": 11675,
+        "text": " herself",
+        "probability": 0.03365882222846427
+      },
+      {
+        "id": 432,
+        "text": " it",
+        "probability": 0.02848719453626967
+      },
+      {
+        "id": 1340,
+        "text": " she",
+        "probability": 0.023391308526152496
+      },
+      {
+        "id": 2176,
+        "text": " both",
+        "probability": 0.018187710841876554
+      }
+    ],
+    "position": 37,
+    "bias": []
+  },
+  "positive_bias_3": {
+    "token": 279,
+    "text": " the",
+    "done": false,
+    "top": [
+      {
+        "id": 279,
+        "text": " the",
+        "probability": 0.5484431037562894
+      },
+      {
+        "id": 264,
+        "text": " a",
+        "probability": 0.10531723844422972
+      },
+      {
+        "id": 429,
+        "text": " that",
+        "probability": 0.07264703086545504
+      },
+      {
+        "id": 432,
+        "text": " it",
+        "probability": 0.0470891948354372
+      },
+      {
+        "id": 60641,
+        "text": " roses",
+        "probability": 0.02620163650249661
+      },
+      {
+        "id": 700,
+        "text": " out",
+        "probability": 0.023315644180947868
+      },
+      {
+        "id": 1059,
+        "text": " her",
+        "probability": 0.020776577867601707
+      },
+      {
+        "id": 1340,
+        "text": " she",
+        "probability": 0.011379903397153066
+      }
+    ],
+    "position": 37,
+    "bias": [
+      {
+        "position": 7,
+        "value": 3
+      },
+      {
+        "position": 10,
+        "value": 3
+      },
+      {
+        "position": 20,
+        "value": 3
+      }
+    ]
+  },
+  "negative_bias_3": {
+    "token": 279,
+    "text": " the",
+    "done": false,
+    "top": [
+      {
+        "id": 279,
+        "text": " the",
+        "probability": 0.34466116165473243
+      },
+      {
+        "id": 264,
+        "text": " a",
+        "probability": 0.11169433912842239
+      },
+      {
+        "id": 429,
+        "text": " that",
+        "probability": 0.09301685560177693
+      },
+      {
+        "id": 700,
+        "text": " out",
+        "probability": 0.07283152902784655
+      },
+      {
+        "id": 11675,
+        "text": " herself",
+        "probability": 0.034038999139510785
+      },
+      {
+        "id": 1340,
+        "text": " she",
+        "probability": 0.026856333213817734
+      },
+      {
+        "id": 432,
+        "text": " it",
+        "probability": 0.023970814790215993
+      },
+      {
+        "id": 2176,
+        "text": " both",
+        "probability": 0.02291251853453137
+      }
+    ],
+    "position": 37,
+    "bias": [
+      {
+        "position": 7,
+        "value": -3
+      },
+      {
+        "position": 10,
+        "value": -3
+      },
+      {
+        "position": 20,
+        "value": -3
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spaceship / Local attention</title>
+  </head>
+  <body>
+    <header><a href="/index.html">Spaceship</a><span>Local attention</span><span id="connection" role="status">Connecting to llama.cpp...</span></header>
+    <main>
+      <h1>Put weight on a thought.</h1>
+      <p class="intro">Select tokens in the prompt, turn their weight up or down, and steer the next words as they arrive.</p>
+      <form id="prompt-form">
+        <label for="prompt">Story so far</label>
+        <textarea id="prompt" rows="5" maxlength="12000">
+The spaceship carried two things: a greenhouse full of roses and a damaged engine. Mira loved the garden, but the mechanic worried about the reactor. When she opened the hatch, she found</textarea>
+        <button id="load" type="submit">Load prompt</button>
+      </form>
+      <section aria-labelledby="focus-heading">
+        <div class="section-title">
+          <h2 id="focus-heading">Attention lock</h2>
+          <span id="token-count">Load a prompt to select tokens.</span>
+        </div>
+        <p id="selection-help">Click a token to select it; shift-click to extend the selection. Click selected tokens to release them.</p>
+        <div id="tokens" aria-describedby="selection-help" aria-label="Prompt tokens"></div>
+        <div class="weight-controls">
+          <label for="weight">Selected token weight</label>
+          <input id="weight" type="range" min="-4" max="4" step="0.25" value="2" />
+          <output id="weight-value" for="weight">+2.00</output>
+          <button id="clear" type="button" disabled>Release all</button>
+        </div>
+        <p id="weight-description">+2.00 adds about 7.4× to the selected keys’ attention odds, before normalization.</p>
+      </section>
+      <div class="transport">
+        <button id="generate" disabled>Generate live</button><button id="stop" disabled>Stop</button
+        ><button id="compare" disabled>Compare baseline / steered</button
+        ><label for="limit">Tokens <input id="limit" type="number" value="64" min="1" max="256" /></label>
+      </div>
+      <p id="status" role="status" aria-live="polite">Load the prompt to begin.</p>
+      <div class="continuations">
+        <section>
+          <h2>Baseline <span>weight 0</span></h2>
+          <div id="baseline" class="prose">Run a comparison to see the unmodified continuation.</div>
+        </section>
+        <section>
+          <h2>Steered <span id="steered-label">live weights</span></h2>
+          <div id="steered" class="prose">Your continuation will appear here.</div>
+        </section>
+      </div>
+      <details id="evidence">
+        <summary>Next-token probabilities &amp; run evidence</summary>
+        <p id="proof">Comparisons use the identical prompt and greedy decoding. Only the attention mask changes.</p>
+        <table>
+          <caption id="probability-caption">
+            Most recent decode
+          </caption>
+          <thead>
+            <tr>
+              <th>Next token</th>
+              <th>Probability</th>
+            </tr>
+          </thead>
+          <tbody id="probabilities"></tbody>
+        </table>
+        <button id="download" disabled>Download run JSON</button>
+      </details>
+      <footer>
+        <p>
+          Weights apply to selected prompt keys at every attention layer. Changing a weight affects the next decode; existing text stays in the cache. The
+          original Spaceship simulation is available via the link above.
+        </p>
+        <p>No cloud inference. This demo runs on your computer through a patched llama.cpp.</p>
+      </footer>
+    </main>
+    <script type="module" src="/src/local/main.ts"></script>
+  </body>
+</html>

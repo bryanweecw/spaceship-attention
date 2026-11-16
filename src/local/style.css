@@ -1,0 +1,249 @@
+:root {
+  color-scheme: dark;
+  --bg: #000;
+  --ink: #fff;
+  --muted: #aaa;
+  --line: #555;
+  --active: #ff963b;
+  font:
+    14px/1.6 "JetBrains Mono Variable",
+    monospace;
+  background: var(--bg);
+  color: var(--ink);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+::selection {
+  background: var(--active);
+  color: var(--bg);
+}
+a {
+  color: inherit;
+  text-underline-offset: 0.25em;
+}
+:focus-visible {
+  outline: 2px solid var(--active);
+  outline-offset: 4px;
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--line);
+}
+header a {
+  font-weight: 700;
+}
+#connection {
+  margin-left: auto;
+  color: var(--muted);
+}
+main {
+  max-width: 1040px;
+  margin: auto;
+  padding: 3rem 2rem;
+}
+h1,
+h2,
+p {
+  margin: 0 0 1rem;
+}
+h1 {
+  font-size: 1.6rem;
+  line-height: 1.4;
+}
+h2 {
+  font-size: 1rem;
+}
+h2 span,
+#token-count {
+  color: var(--muted);
+  font-weight: 400;
+}
+.intro,
+footer {
+  max-width: 75ch;
+  color: var(--muted);
+}
+form,
+main > section {
+  margin-top: 2rem;
+}
+label {
+  display: block;
+}
+textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  background: #111;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 1rem;
+  margin: 0.5rem 0 1rem;
+  font: inherit;
+  caret-color: var(--active);
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+}
+button:hover:enabled {
+  background: #222;
+  border-color: var(--ink);
+}
+button:disabled {
+  color: #999;
+  border-color: #333;
+  cursor: default;
+}
+.section-title,
+.weight-controls,
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.section-title {
+  justify-content: space-between;
+}
+#selection-help,
+#weight-description {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+#tokens {
+  padding: 1rem 0;
+  min-height: 4rem;
+  max-height: 20rem;
+  overflow-y: auto;
+  scrollbar-color: var(--line) var(--bg);
+}
+#tokens button {
+  border: 1px solid #333;
+  padding: 0.2rem 0.1rem;
+  margin: 0.15rem 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  min-height: 36px;
+}
+#tokens button[aria-pressed="true"] {
+  background: var(--active);
+  color: var(--bg);
+  border-color: var(--active);
+}
+#weight {
+  accent-color: var(--active);
+  flex: 1;
+  min-width: 120px;
+}
+#weight-value {
+  font-variant-numeric: tabular-nums;
+  min-width: 5ch;
+}
+#weight-description {
+  margin-top: 0.75rem;
+}
+.transport {
+  margin-top: 2rem;
+}
+.transport label {
+  margin-left: auto;
+}
+#limit {
+  width: 5rem;
+  padding: 0.3rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+#status {
+  margin-top: 1rem;
+  color: var(--muted);
+  min-height: 1.6em;
+}
+.continuations {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+.continuations section {
+  min-width: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+.prose {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-height: 9rem;
+}
+#steered {
+  color: var(--active);
+}
+details {
+  border-top: 1px solid var(--line);
+  padding: 1rem 0;
+}
+summary {
+  cursor: pointer;
+}
+details p {
+  margin-top: 1rem;
+}
+table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+th,
+td {
+  border-bottom: 1px solid #333;
+  padding: 0.4rem;
+  text-align: left;
+}
+caption {
+  text-align: left;
+  color: var(--muted);
+}
+footer {
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+}
+@media (max-width: 640px) {
+  header {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  #connection {
+    margin-left: 0;
+    width: 100%;
+  }
+  main {
+    padding: 2rem 1rem;
+  }
+  .continuations {
+    grid-template-columns: 1fr;
+  }
+  .transport label {
+    margin-left: 0;
+  }
+}

@@ -1,7 +1,16 @@
 export type Bias = { position: number; value: number }
 export type PromptToken = { position: number; id: number; text: string; start: number; end: number }
 export type PromptSession = { session: string; prompt: string; prompt_tokens: number; tokens: PromptToken[] }
-export type Decode = { token: number; text: string; done: boolean; position: number; bias: Bias[]; top: { id: number; text: string; probability: number }[] }
+export type Decode = {
+  attention?: number[]
+  attention_layer?: number
+  token: number
+  text: string
+  done: boolean
+  position: number
+  bias: Bias[]
+  top: { id: number; text: string; probability: number }[]
+}
 
 export async function request<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(

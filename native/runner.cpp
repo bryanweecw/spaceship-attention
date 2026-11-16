@@ -1,7 +1,9 @@
 #include "llama.h"
+#include "ggml-backend.h"
 #include "nlohmann/json.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <numeric>
 #include <stdexcept>
@@ -16,6 +18,28 @@ static std::string piece(const llama_vocab * vocab, llama_token token) {
     return std::string(buf.data(), n);
 }
 
+struct attention_capture {
+    std::string tensor_name;
+    std::vector<float> mean;
+};
+
+static bool capture_attention(ggml_tensor * tensor, bool ask, void * user_data) {
+    auto & capture = *static_cast<attention_capture *>(user_data);
+    const bool selected = capture.tensor_name == ggml_get_name(tensor) && tensor->ne[1] == 1;
+    if (ask) return selected;
+    if (!selected || tensor->type != GGML_TYPE_F32) return true;
+    std::vector<float> values(ggml_nbytes(tensor) / sizeof(float));
+    ggml_backend_tensor_get(tensor, values.data(), 0, ggml_nbytes(tensor));
+    const int64_t keys = tensor->ne[0], heads = tensor->ne[2];
+    capture.mean.assign(keys, 0.0f);
+    for (int64_t h = 0; h < heads; ++h) {
+        for (int64_t k = 0; k < keys; ++k) {
+            capture.mean[k] += values[h*tensor->nb[2]/sizeof(float) + k] / heads;
+        }
+    }
+    return true;
+}
+
 int main(int argc, char ** argv) {
     if (argc != 2) { std::cerr << "usage: attention-runner model.gguf\n"; return 1; }
     llama_backend_init();
@@ -23,7 +47,9 @@ int main(int argc, char ** argv) {
     mp.n_gpu_layers = 0;
     auto * model = llama_model_load_from_file(argv[1], mp);
     if (!model) return 2;
+    attention_capture capture{"kq_soft_max-" + std::to_string(llama_model_n_layer(model)-1), {}};
     auto cp = llama_context_default_params();
+    cp.cb_eval = capture_attention; cp.cb_eval_user_data = &capture;
     cp.n_ctx = 2048; cp.n_batch = 512; cp.n_ubatch = 512;
     cp.n_threads = 4; cp.n_threads_batch = 4;
     cp.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
@@ -83,7 +109,9 @@ int main(int argc, char ** argv) {
                     bias[p] = value;
                 }
                 if (!llama_set_attention_bias(ctx, bias.data(), bias.size())) throw std::runtime_error("attention bias rejected");
+                capture.mean.clear();
                 decode(decoded, 1); ++decoded;
+                capture.mean.resize(std::min(capture.mean.size(), decoded));
                 const float * logits = llama_get_logits_ith(ctx, -1);
                 std::vector<int> order(nv); std::iota(order.begin(), order.end(), 0);
                 std::partial_sort(order.begin(), order.begin()+8, order.end(), [&](int a, int b) { return logits[a] > logits[b]; });
@@ -94,7 +122,7 @@ int main(int argc, char ** argv) {
                     top.push_back({{"id", id}, {"text", piece(vocab, id)}, {"probability", std::exp(double(logits[id]-logits[order[0]]))/sum}});
                 }
                 int next = order[0]; tokens.push_back(next);
-                std::cout << json({{"token", next}, {"text", piece(vocab, next)}, {"done", llama_vocab_is_eog(vocab, next)}, {"top", top}, {"position", decoded-1}, {"bias", req.at("bias")}}).dump(-1, ' ', false, json::error_handler_t::replace) << std::endl;
+                std::cout << json({{"token", next}, {"text", piece(vocab, next)}, {"done", llama_vocab_is_eog(vocab, next)}, {"top", top}, {"position", decoded-1}, {"bias", req.at("bias")}, {"attention", capture.mean}, {"attention_layer", llama_model_n_layer(model)-1}}).dump(-1, ' ', false, json::error_handler_t::replace) << std::endl;
             } else throw std::runtime_error("unknown operation");
         } catch (const std::exception & e) { std::cout << json({{"error", e.what()}}).dump() << std::endl; }
     }

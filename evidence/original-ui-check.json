@@ -1,0 +1,13 @@
+{
+  "interface": "original Spaceship canvas and controls",
+  "selection_bias_position": 10,
+  "dragged_bias_position": 14,
+  "bias": 2,
+  "auto_attention_boxes": 3,
+  "fan_label": "spaceship: somewhat amplify",
+  "measured_attention_layer": 23,
+  "original_font": "11px / 18px \"JetBrains Mono Variable\", monospace",
+  "scrub_regeneration": true,
+  "added_steering_prompt": false,
+  "browser_errors": []
+}

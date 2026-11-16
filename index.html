@@ -877,7 +877,9 @@
     <dialog id="live-keys" aria-labelledby="live-keys-title" aria-describedby="live-keys-note" closedby="closerequest">
       <form method="dialog" autocomplete="off">
         <h2 id="live-keys-title">launch</h2>
-        <p id="live-keys-note">Lift off from the simulator to call the real API with your own keys, kept in this browser's local storage.</p>
+        <p id="live-keys-note">
+          Choose local llama.cpp for attention steering on this computer, or launch the cloud models with your keys, kept in this browser's local storage.
+        </p>
         <label
           >cerebras
           <input
@@ -911,6 +913,7 @@
         /></label>
         <p class="actions">
           <button type="button" command="close" commandfor="live-keys">abort</button>
+          <button value="local" formnovalidate>local llama.cpp</button>
           <button value="live">launch</button>
         </p>
       </form>

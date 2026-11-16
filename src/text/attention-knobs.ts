@@ -2,7 +2,7 @@ import type { Point } from "../point.ts"
 import { startAttention, type AttentionBox, type AttentionGeneration, type AttentionSource, type Lead } from "./attention.ts"
 import { makeDraggable } from "./drag.ts"
 import { circleOf, distance, linkBetween, pathOf } from "./links.ts"
-import { wordSpans, type Span } from "./segments.ts"
+import { wordSpans, collapsedSpan, type Span } from "./segments.ts"
 import { sounds } from "./sound/sounds.ts"
 import { domPointAt, textOffsetOf } from "./text-offsets.ts"
 
@@ -100,6 +100,7 @@ export function createAttentionKnobs({ source, textElement, knob, linkPath, acti
       return {
         before: text.slice(words[first].start, keyword.start),
         keyword: text.slice(keyword.start, keyword.end),
+        keywordSpan: collapsedSpan(text, keyword),
         after: text.slice(keyword.end, words[last].end),
       }
     })

@@ -87,6 +87,18 @@ class AttentionTests(unittest.TestCase):
         self.assertEqual(len(cafes), 2)
         self.step([{'position': cafes[1], 'value': 2}])
 
+    def test_measured_attention_is_normalized_and_responds_to_bias(self):
+        initial = self.init()
+        position = next(t['position'] for t in initial['tokens'] if 'roses' in t['text'])
+        neutral = self.step()
+        self.assertEqual(len(neutral['attention']), initial['prompt_tokens'])
+        self.assertAlmostEqual(sum(neutral['attention']), 1, places=5)
+        self.assertTrue(all(x >= 0 for x in neutral['attention']))
+        self.init()
+        steered = self.step([{'position': position, 'value': 2}])
+        self.assertGreater(steered['attention'][position], neutral['attention'][position])
+        self.assertEqual(steered['attention_layer'], 23)
+
     def test_reject_out_of_range_and_nonfinite_bias(self):
         initial = self.init()
         for bias in ([{'position': -1, 'value': 2}],

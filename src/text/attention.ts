@@ -1,8 +1,8 @@
 /** A shaded run of words around an underlined keyword, extending `before` and `after` words from it. Indices count the word-like segments of the text, as given by `wordSpans`. */
 export type AttentionBox = { keyword: number; before: number; after: number }
 
-/** A box as the text it covers: `before + keyword + after` is its phrase, copied from the text. */
-export type Lead = { before: string; keyword: string; after: string }
+/** A box's phrase and optional exact keyword offsets in the story with collapsed whitespace. */
+export type Lead = { before: string; keyword: string; after: string; keywordSpan?: { start: number; end: number } }
 
 /** Streams boxes over `text`. Must stop (by throwing or returning) once `signal` aborts. */
 export type AttentionSource = (text: string, signal: AbortSignal) => AsyncIterable<AttentionBox>

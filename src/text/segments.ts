@@ -12,3 +12,8 @@ const sentenceSegmenter = new Intl.Segmenter(undefined, { granularity: "sentence
 export function sentenceSpans(text: string): Span[] {
   return [...sentenceSegmenter.segment(text)].map(({ index, segment }) => ({ start: index, end: index + segment.length }))
 }
+
+/** Offsets in the single-space text sent to the model, preserving occurrence identity. */
+export function collapsedSpan(text: string, span: Span): Span {
+  return { start: text.slice(0, span.start).replace(/\s+/g, " ").length, end: text.slice(0, span.end).replace(/\s+/g, " ").length }
+}

@@ -53,7 +53,10 @@ def serve(model, port):
                 return self.reply(200, {**ready, "ready": process.poll() is None,
                                         "model": Path(model).name, "mechanism": "pre-softmax key-position bias"})
             if self.path == "/":
-                self.path = "/steer.html"
+                self.send_response(302)
+                self.send_header("Location", "/index.html?local=true")
+                self.end_headers()
+                return
             super().do_GET()
 
         def do_POST(self):

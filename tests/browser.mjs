@@ -12,7 +12,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } })
   const errors = []
   page.on("pageerror", (e) => errors.push(e.message))
-  await page.goto(base)
+  await page.goto(base + "/steer.html")
   await page.getByText("llama.cpp / qwen", { exact: false }).waitFor()
   await page.getByRole("button", { name: "Load prompt", exact: true }).click()
   await page.getByText("Prompt loaded.", { exact: false }).waitFor()

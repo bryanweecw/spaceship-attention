@@ -15,6 +15,7 @@ import { createLeftRail } from "./left-rail.ts"
 import { circleOf } from "./links.ts"
 import { liveAttention } from "./live-attention.ts"
 import { liveSource } from "./live-completion.ts"
+import { createLocalSource } from "./local/source.ts"
 import { liveDimension } from "./live-dimension.ts"
 import { liveInfluence } from "./live-influence.ts"
 import { bindModeToggle } from "./live-mode.ts"
@@ -64,13 +65,15 @@ await document.fonts.load(style.font)
 const measure = document.createElement("canvas").getContext("2d")!
 measure.font = style.font
 
-const isLive = new URLSearchParams(location.search).get("live") === "true"
-const stream = createTextStream(isLive ? liveSource : simulatedSource, render)
+const isLocal = new URLSearchParams(location.search).get("local") === "true"
+const isLive = !isLocal && new URLSearchParams(location.search).get("live") === "true"
+const local = isLocal ? createLocalSource(refreshRail) : undefined
+const stream = createTextStream(local?.source ?? (isLive ? liveSource : simulatedSource), render)
 const rail = createLeftRail(railElement)
-const connections = createConnections({ source: isLive ? liveInfluence : simulatedInfluence, onChange: refreshRail })
-const relevance = createKeywordRelevance(isLive ? liveRelevance : simulatedRelevance, refreshRail)
+const connections = createConnections({ source: isLocal ? async function* () {} : isLive ? liveInfluence : simulatedInfluence, onChange: refreshRail })
+const relevance = createKeywordRelevance(isLocal ? async function* () {} : isLive ? liveRelevance : simulatedRelevance, refreshRail)
 const attention = createAttentionKnobs({
-  source: isLive ? liveAttention : simulatedAttention,
+  source: local?.attention ?? (isLive ? liveAttention : simulatedAttention),
   textElement: element,
   knob: handle,
   linkPath: $<SVGPathElement>("#attention-links"),
@@ -89,8 +92,8 @@ const futureKnobs = createFutureKnobs({
   linkPath: $<SVGPathElement>("#future-links"),
   tunedLinkPath: $<SVGPathElement>("#future-tuned-link"),
   hud: $<SVGGElement>("#future-hud"),
-  source: isLive ? liveDimension : simulatedDimension,
-  realization: isLive ? liveRealization : simulatedRealization,
+  source: local?.dimensions ?? (isLive ? liveDimension : simulatedDimension),
+  realization: isLocal ? async function* () {} : isLive ? liveRealization : simulatedRealization,
   textElement: element,
   context: () => ({ text: shownText, leads: attention.leads() }),
   onChange: invalidateFuture,
@@ -119,7 +122,12 @@ let didHold = false
 /** The previous drag point, for how fast the knob moves. */
 let lastDrag: { point: Point; at: number } | undefined
 
-bindModeToggle(modeToggle, $<HTMLDialogElement>("#live-keys"), isLive)
+bindModeToggle(modeToggle, $<HTMLDialogElement>("#live-keys"), isLive, isLocal)
+if (isLocal) {
+  railElement.title = "Measured final-layer attention, averaged over heads; overlapping tokens counted in each span. Not causal influence."
+  statusElement.title =
+    "Local llama.cpp; boxes add +2 attention bias. Fan angle suppresses/amplifies its named word; distance sets strength. Pinning is unavailable in local mode."
+}
 startSound()
 showSoundToggle()
 soundToggle.addEventListener("click", () => {
@@ -202,6 +210,8 @@ function discardIfBehindRest() {
   const count = shownCount ?? 0
   if (count >= restCount) return
   stream.truncate(count)
+  retryAt = 0
+  retryMs = RETRY_MS
   restCount = count
   isRegenerationHeld = true
 }
@@ -260,6 +270,7 @@ function report() {
     steering: futureKnobs.controls().length,
     pinned: futureKnobs.pinnedCount(),
   })
+  if (local?.failure()) statusElement.textContent = `local: ${local.failure()}. Start native/server.py and reload.`
 }
 
 function restartDwell() {
@@ -343,7 +354,7 @@ function pointerTargets(): PointerTarget[] {
       rects: clientRectsOf(phrase),
       pad: 3,
       label: () => {
-        const { relevance: value, isMeasuring } = relevance.relevanceOf(leads[i])
+        const { relevance: value, isMeasuring } = local ? local.relevanceOf(shownText, attention.spans()[i].keyword) : relevance.relevanceOf(leads[i])
         return isMeasuring ? "box <b>··</b>" : value === undefined ? "box" : `box <b>${value >= 1 ? "1.0" : value.toFixed(2).replace(/^0/, "")}</b>`
       },
     })),
@@ -475,11 +486,12 @@ function refreshRail() {
     relevance.update(story, leads)
     const { left, top } = element.getBoundingClientRect()
     railElement.style.translate = `${left + scrollX - railElement.offsetWidth - RAIL_GAP_PX}px ${top + scrollY + parseFloat(style.paddingTop)}px`
-    rail.show({
+    const state = {
       lines: lineSpansOf(story.content),
       boxes: attention.spans().map((spans, i) => ({ ...spans, ...relevance.relevanceOf(leads[i]) })),
       connection: connections.current(),
-    })
+    }
+    rail.show(local ? local.railState(shownText, state.lines, state.boxes) : state)
   })
 }
 

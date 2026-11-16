@@ -2,7 +2,7 @@
 
 ## Local llama.cpp attention demo
 
-This private derivative adds real pre-softmax attention steering with a local GGUF model. See [LOCAL_DEMO.md](LOCAL_DEMO.md) for setup, the intervention, scope, and verification. Run `bash scripts/setup-local.sh`, then `python3 native/server.py --model models/qwen2.5-0.5b-instruct-q4_k_m.gguf` and open http://127.0.0.1:8088.
+This private derivative extends the original Spaceship canvas, attention locks, scrub knob, fan controls, and rail with real pre-softmax attention steering and measured attention from a local GGUF model. See [LOCAL_DEMO.md](LOCAL_DEMO.md) for setup, the intervention, scope, and verification. Run `bash scripts/setup-local.sh`, then `python3 native/server.py --model models/qwen2.5-0.5b-instruct-q4_k_m.gguf` and open http://127.0.0.1:8088.
 
 The original project and documentation follow.
 

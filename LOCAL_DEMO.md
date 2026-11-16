@@ -45,7 +45,7 @@ The UI shows selected key positions and actual output probabilities, **not measu
 - The API rejects models without the standard KV-cache implementation. Hybrid/recurrent, encoder-decoder, MLA, and other cache variants are outside the demonstrated scope. Other models also need token pieces that reconstruct the raw prompt exactly; models adding visible BOS tokens are rejected.
 - One active session at a time. A second prompt load invalidates the previous session. Stop finishes the in-flight decode, then halts; restarting generation begins from the prompt again.
 - Native process: newline-delimited JSON on stdin/stdout. Python serializes inference operations, validates browser origin, and serves static assets. No model weights, build outputs, browser downloads, credentials, or vendored source are committed.
-- The inherited Pages workflow only runs in the upstream repository. The private copy's CI builds the patched runner and frontend without downloading model weights; it does not publish the site.
+- The inherited Pages workflow is removed from this private copy. There are no deployment or CI workflows; verification runs locally with the commands below. This also permits pushing with a GitHub credential that has repository access without workflow-write access.
 
 ## Verify
 

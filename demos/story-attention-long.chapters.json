@@ -1,0 +1,62 @@
+[
+  {
+    "seconds": 0.00018441600000005564,
+    "text": "Spaceship’s original interface. Local Qwen2.5 through llama.cpp. Actual-speed recording."
+  },
+  {
+    "seconds": 5.1094355,
+    "text": "Drag the main knob forward: first the opening, then the generated continuation."
+  },
+  {
+    "seconds": 23.721250375000004,
+    "text": "Select “roses”. Its attention lock adds +2 to the selected word’s model keys."
+  },
+  {
+    "seconds": 33.301020875,
+    "text": "Reveal more of the regenerated future. The lock stays attached as the cursor moves."
+  },
+  {
+    "seconds": 44.821758208,
+    "text": "Move the lock onto “engine”. Dragging changes the actual weighted key positions."
+  },
+  {
+    "seconds": 53.856600791,
+    "text": "Double-click the main knob to release locks. Double-click again to discover measured attention."
+  },
+  {
+    "seconds": 63.1429055,
+    "text": "Hover the locks and inspect the left rail: final-layer attention averaged across heads."
+  },
+  {
+    "seconds": 71.395156083,
+    "text": "Double-click and hold the main knob, then pull out a fan control."
+  },
+  {
+    "seconds": 81.58129391599999,
+    "text": "The fan names a story word. Turn left to suppress attention to that word."
+  },
+  {
+    "seconds": 91.38204454100001,
+    "text": "Bring the control closer: distance reduces the strength of the intervention."
+  },
+  {
+    "seconds": 100.30839829099999,
+    "text": "Now turn right and move outward: amplify the same word more strongly."
+  },
+  {
+    "seconds": 110.27746254099999,
+    "text": "Scrub backward and rest. Spaceship discards the buffered future and generates a new branch."
+  },
+  {
+    "seconds": 120.36140383299998,
+    "text": "Move forward again to read the new continuation under the current attention settings."
+  },
+  {
+    "seconds": 131.556292958,
+    "text": "Release all attached controls, then explore another continuation with the original scrubber."
+  },
+  {
+    "seconds": 152.235725125,
+    "text": "Same Spaceship UI. Real attention bias and measured attention. No added steering instructions."
+  }
+]

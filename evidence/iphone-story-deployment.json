@@ -1,14 +1,18 @@
 {
   "url": "https://spaceship-iphone-story.vercel.app",
-  "deployment_id": "dpl_13Hfi8FPEz8PwRcvdTXFm8g1LkR3",
+  "deployment_id": "dpl_2xroX7SaDPtuRuU3BERs68cGmCFP",
   "state": "READY",
   "target": "production",
-  "source_commit": "1747948",
+  "source_commit": "13d2186",
   "branch": "demo/iphone-story",
   "hosting": "Vercel static Build Output API, no functions",
   "unauthenticated_http_status": 200,
-  "hosted_webkit_model_test": "passed",
+  "hosted_webkit_model_test": "initial deployment passed; not rerun on this revision",
   "local_chromium_touch_scrub": "passed",
   "inference_backend": false,
-  "physical_iphone_16_tested": false
+  "physical_iphone_16_tested": false,
+  "local_webkit_model_test": "passed with locally served pinned GGUF",
+  "local_desktop_refill_rewind_test": "passed",
+  "runtime": "attention-612ce06fb7678202.wasm",
+  "client": "main-VL49paiG.js"
 }

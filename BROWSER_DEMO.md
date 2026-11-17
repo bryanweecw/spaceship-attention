@@ -2,7 +2,7 @@
 
 Live: https://spaceship-iphone-story.vercel.app
 
-Production deployment `dpl_13Hfi8FPEz8PwRcvdTXFm8g1LkR3` is READY, from implementation commit `1747948`. The public URL passed the real-model WebKit smoke test without an authentication bypass. Physical iPhone 16 performance remains unverified.
+Production deployment `dpl_2xroX7SaDPtuRuU3BERs68cGmCFP` is READY, from implementation commit `13d2186`. The public URL returns HTTP 200 and serves the verified UI/runtime hashes. This revision passed local real-model desktop and WebKit checks; the initial deployment also passed a hosted real-model WebKit test. Physical iPhone 16 performance remains unverified.
 
 This branch (`demo/iphone-story`) starts from the saved story checkpoint. It retains the original Spaceship canvas, attention boxes, scrubber, fan, rail, and sounds. The code-generation experiment remains on its separate branch.
 

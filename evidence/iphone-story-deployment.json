@@ -1,31 +1,21 @@
 {
   "url": "https://spaceship-iphone-story.vercel.app",
-  "deployment_id": "dpl_4r8BqueVGY4CEV48pwPGFNiS7e6W",
+  "deployment_id": "dpl_HDirs4A68oLTKLBZbfh8JnAucVGM",
   "state": "READY",
   "target": "production",
-  "source_commit": "a0225ba",
+  "source_commit": "b0e4835",
   "branch": "demo/iphone-story",
   "hosting": "Vercel static Build Output API, no functions",
   "unauthenticated_http_status": 200,
-  "runtime": "attention-accc4c0658e210da.wasm",
-  "client": "main-uZWBTo7L.js",
+  "runtime": "attention-42f126bd57f7e5f9.wasm",
+  "client": "main-BmeZviyM.js",
   "default_model": "qwen2.5-0.5b",
-  "models": [
-    {
-      "id": "qwen2.5-0.5b",
-      "bytes": 491400032
-    },
-    {
-      "id": "smollm2-360m",
-      "bytes": 270590880
-    }
-  ],
-  "local_qwen_webkit_attention_cache_test": "passed",
-  "local_story_samples": "Qwen and SmolLM passed no-quiz and no repeated eight-word passage sample checks",
-  "local_qwen_framed_context_rollover": "passed",
-  "local_chromium_mobile_hold_scroll": "passed: expanded hit target, no selection, context menu suppression, native swipe, edge scroll and growing canvas",
-  "local_cursor_gestures": "simulator fast forward and back-forward passed",
-  "hosted_model_test": "not rerun on this deployment; local real-model checks and matching public assets verified",
+  "local_qwen_composer_webkit_flow": "passed: start before load, steering only, new instruction with locks, paragraph copy and draft reset",
+  "local_document_samples": "documentation, proposal, email and custom prompt generated; document attention changed with bias",
+  "local_empty_draft_completion": "passed: 9 steps, natural ending, no automatic retry",
+  "local_prefill_cancellation": "passed: cancelled at batch boundary and next prompt generated",
+  "local_mobile_regression": "Chromium hold fan, native swipe, edge scroll, growing canvas and cursor gestures passed in simulator",
+  "hosted_model_test": "not rerun on this deployment; public UI/runtime hashes verified",
   "inference_backend": false,
   "physical_iphone_16_tested": false
 }

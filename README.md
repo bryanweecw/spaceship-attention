@@ -1,6 +1,6 @@
 # 🕹️ Spaceship IDE
 
-## Browser-only story for iPhone
+## Browser writing demo for iPhone
 
 This branch preserves the original interface and runs the real attention-steering model on the device, with no inference backend. See [BROWSER_DEMO.md](BROWSER_DEMO.md) for the model download, touch controls, build, verification, and deployment. The story checkpoint and code-generation experiment remain on separate branches. Choose quantized Qwen2.5 0.5B (default) or the smaller SmolLM2 360M at startup. The canvas supports touch scrolling and edge scrolling while dragging. **Compose** adds editable documentation, proposal, email and custom prompts. Continue with the original prompt and steering, or add a new instruction for the next text; copy preserves paragraph breaks.
 

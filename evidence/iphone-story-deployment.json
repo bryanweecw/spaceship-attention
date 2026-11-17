@@ -1,20 +1,31 @@
 {
   "url": "https://spaceship-iphone-story.vercel.app",
-  "deployment_id": "dpl_FvnE9m6evyPQKjPQW5tnLugEksNo",
+  "deployment_id": "dpl_4r8BqueVGY4CEV48pwPGFNiS7e6W",
   "state": "READY",
   "target": "production",
-  "source_commit": "14c4ba7",
+  "source_commit": "a0225ba",
   "branch": "demo/iphone-story",
   "hosting": "Vercel static Build Output API, no functions",
   "unauthenticated_http_status": 200,
-  "hosted_webkit_model_test": "initial deployment passed; not rerun on this revision",
-  "local_chromium_touch_scrub": "passed",
+  "runtime": "attention-accc4c0658e210da.wasm",
+  "client": "main-uZWBTo7L.js",
+  "default_model": "qwen2.5-0.5b",
+  "models": [
+    {
+      "id": "qwen2.5-0.5b",
+      "bytes": 491400032
+    },
+    {
+      "id": "smollm2-360m",
+      "bytes": 270590880
+    }
+  ],
+  "local_qwen_webkit_attention_cache_test": "passed",
+  "local_story_samples": "Qwen and SmolLM passed no-quiz and no repeated eight-word passage sample checks",
+  "local_qwen_framed_context_rollover": "passed",
+  "local_chromium_mobile_hold_scroll": "passed: expanded hit target, no selection, context menu suppression, native swipe, edge scroll and growing canvas",
+  "local_cursor_gestures": "simulator fast forward and back-forward passed",
+  "hosted_model_test": "not rerun on this deployment; local real-model checks and matching public assets verified",
   "inference_backend": false,
-  "physical_iphone_16_tested": false,
-  "local_webkit_model_test": "passed, including bias on generated keys",
-  "local_desktop_refill_rewind_test": "passed",
-  "runtime": "attention-4399d45aecf63122.wasm",
-  "client": "main-D-uUd9uL.js",
-  "local_cursor_demand_test": "passed in WebKit: line 49 reached, reserve filled, 1248 decode steps, 2 KV shifts, 1 prefill",
-  "cursor_gesture_test": "fast forward and back-forward passed with simulator"
+  "physical_iphone_16_tested": false
 }

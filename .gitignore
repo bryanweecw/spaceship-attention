@@ -38,3 +38,5 @@ token-usage.log
 /models/
 __pycache__/
 .capture-local/
+.vercel
+.env*

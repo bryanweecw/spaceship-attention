@@ -15,6 +15,8 @@ import { createLeftRail } from "./left-rail.ts"
 import { circleOf } from "./links.ts"
 import { liveAttention } from "./live-attention.ts"
 import { liveSource } from "./live-completion.ts"
+import { bindTouchControls } from "./browser/touch.ts"
+import { createBrowserEngine } from "./browser/engine.ts"
 import { createLocalSource } from "./local/source.ts"
 import { liveDimension } from "./live-dimension.ts"
 import { liveInfluence } from "./live-influence.ts"
@@ -38,7 +40,7 @@ import { countWords, firstWords } from "./words.ts"
 
 const DWELL_MS = 100
 /** Generated words kept ready past the knob: whenever fewer remain, the stream continues the text, appending, never rewriting. */
-const BUFFER_WORDS = 300
+const BUFFER_WORDS = new URLSearchParams(location.search).get("engine") === "native" ? 300 : 48
 /** A top-up that adds no words (the source failed or said nothing) is retried after this long, doubling each time up to `MAX_RETRY_MS`. */
 const RETRY_MS = 1000
 const MAX_RETRY_MS = 16000
@@ -65,9 +67,14 @@ await document.fonts.load(style.font)
 const measure = document.createElement("canvas").getContext("2d")!
 measure.font = style.font
 
-const isLocal = new URLSearchParams(location.search).get("local") === "true"
-const isLive = !isLocal && new URLSearchParams(location.search).get("live") === "true"
-const local = isLocal ? createLocalSource(refreshRail) : undefined
+const params = new URLSearchParams(location.search)
+const isLive = params.get("live") === "true"
+const isLocal = !isLive && params.get("sim") !== "true"
+const browser =
+  isLocal && params.get("engine") !== "native"
+    ? createBrowserEngine($<HTMLDialogElement>("#browser-start"), $<HTMLButtonElement>("#browser-load"), $<HTMLOutputElement>("#browser-progress"))
+    : undefined
+const local = isLocal ? createLocalSource(refreshRail, browser?.request, Boolean(browser)) : undefined
 const stream = createTextStream(local?.source ?? (isLive ? liveSource : simulatedSource), render)
 const rail = createLeftRail(railElement)
 const connections = createConnections({ source: isLocal ? async function* () {} : isLive ? liveInfluence : simulatedInfluence, onChange: refreshRail })
@@ -128,6 +135,14 @@ if (isLocal) {
   statusElement.title =
     "Local llama.cpp; boxes add +2 attention bias. Fan angle suppresses/amplifies its named word; distance sets strength. Pinning is unavailable in local mode."
 }
+bindTouchControls({
+  knob: handle,
+  text: element,
+  doubleTap: () => (didHold ? (didHold = false) : detachAllOrExpand()),
+  select: attention.selectSpan,
+  remove: attention.removeAt,
+  overBox: attention.isOverBox,
+})
 startSound()
 showSoundToggle()
 soundToggle.addEventListener("click", () => {
@@ -270,7 +285,7 @@ function report() {
     steering: futureKnobs.controls().length,
     pinned: futureKnobs.pinnedCount(),
   })
-  if (local?.failure()) statusElement.textContent = `local: ${local.failure()}. Start native/server.py and reload.`
+  if (local?.failure()) statusElement.textContent = `${local.failure()}. ${browser ? "Reload to retry." : "Start native/server.py and reload."}`
 }
 
 function restartDwell() {
@@ -292,7 +307,9 @@ function restartDwell() {
  * and the continuation is what the reader waits for, so it is always asked first.
  */
 function afterStreaming(request: () => void) {
-  stream.streaming().then(request)
+  stream.streaming().then(() => {
+    if (shownText.trim()) request()
+  })
 }
 
 function regenerateFuture() {

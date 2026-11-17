@@ -1,0 +1,9 @@
+.git
+vendor
+models
+build
+node_modules
+.capture
+.capture-local
+demos
+.env*

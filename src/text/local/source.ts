@@ -13,7 +13,7 @@ const OPENING =
 type Snapshot = { context: string; tokens: PromptToken[]; attention: number[]; layer: number }
 
 /** Owns inference ordering and measured attention for the original canvas, including its buffered future. */
-export function createLocalSource(onMeasurement: () => void) {
+export function createLocalSource(onMeasurement: () => void, infer: typeof request = request, mobile = false) {
   let pending = Promise.resolve()
   let snapshots: Snapshot[] = []
   let failure: string | undefined
@@ -29,7 +29,7 @@ export function createLocalSource(onMeasurement: () => void) {
       try {
         signal.throwIfAborted()
         const prompt = normalize(prefix)
-        const session = await request<PromptSession>("/api/init", { prompt })
+        const session = await infer<PromptSession>("/api/init", { prompt })
         signal.throwIfAborted()
         snapshots = snapshots.filter(({ context }) => prompt.startsWith(normalize(context)) && normalize(context).length < prompt.length)
         const bias = attentionBias(prompt, session.tokens, steering.leads, steering.controls)
@@ -37,12 +37,12 @@ export function createLocalSource(onMeasurement: () => void) {
         let context = prompt
         let emitted = prompt
         failure = undefined
-        for (let i = 0; i < 256 && !signal.aborted; i++) {
-          const result = await request<Decode>("/api/step", { session: session.session, bias })
+        for (let i = 0; i < (mobile ? 48 : 256) && !signal.aborted; i++) {
+          const result = await infer<Decode>("/api/step", { session: session.session, bias })
           if (signal.aborted) return
           if (result.attention?.length) {
             snapshots.push({ context, tokens: [...tokens], attention: result.attention, layer: result.attention_layer! })
-            if (snapshots.length > 2048) snapshots.shift()
+            if (snapshots.length > (mobile ? 256 : 2048)) snapshots.shift()
             onMeasurement()
           }
           if (result.done) break

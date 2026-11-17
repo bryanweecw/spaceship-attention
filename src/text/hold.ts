@@ -34,7 +34,9 @@ export function onPressAndHold(
     const previous = lastPress
     lastPress = { at: event.timeStamp, x: event.pageX, y: event.pageY }
     const isSecondPress =
-      previous !== undefined && event.timeStamp - previous.at <= (secondPressWithin ?? 0) && distance(previous, lastPress) <= DOUBLE_PRESS_PX
+      previous !== undefined &&
+      event.timeStamp - previous.at <= (secondPressWithin ?? 0) &&
+      distance(previous, lastPress) <= (event.pointerType === "touch" ? 24 : DOUBLE_PRESS_PX)
     if (secondPressWithin !== undefined && !isSecondPress) return
     press = { start: event, latest: event, controller: new AbortController(), isSweeping: false }
     sweep(press)
@@ -44,7 +46,7 @@ export function onPressAndHold(
     press.latest = event
     const { start, isSweeping } = press
     const { center, radius } = isSweeping ? circleOf(element) : { center: { x: start.pageX, y: start.pageY }, radius: STILL_TOLERANCE_PX }
-    if (distance({ x: event.pageX, y: event.pageY }, center) > radius) release()
+    if (distance({ x: event.pageX, y: event.pageY }, center) > (event.pointerType === "touch" ? Math.max(16, radius) : radius)) release()
   })
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) element.addEventListener(type, release)
 

@@ -1,0 +1,13 @@
+{
+  "module": "/runtime/attention-c12df5aa943999e0.js",
+  "wasm": "/runtime/attention-c12df5aa943999e0.wasm",
+  "llama_revision": "c7518dbec59281c430ca5278ab4e60eadbc88b13",
+  "emscripten": "7.0.0",
+  "backend": "WASM32 SIMD, one worker, no GPU required",
+  "model": {
+    "name": "SmolLM2 360M Instruct · Q4_K_M",
+    "url": "https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF/resolve/7be6f65f1db715fe5dc5a4634c0d459b4eed42ec/SmolLM2-360M-Instruct-Q4_K_M.gguf",
+    "bytes": 270590880,
+    "sha256": "2fa3f013dcdd7b99f9b237717fa0b12d75bbb89984cc1274be1471a465bac9c2"
+  }
+}

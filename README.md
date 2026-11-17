@@ -1,5 +1,9 @@
 # 🕹️ Spaceship IDE
 
+## Browser-only story for iPhone
+
+This branch preserves the original interface and runs the real attention-steering model on the device, with no inference backend. See [BROWSER_DEMO.md](BROWSER_DEMO.md) for the model download, touch controls, build, verification, and deployment. The story checkpoint and code-generation experiment remain on separate branches.
+
 ## Local llama.cpp attention demo
 
 This private derivative extends the original Spaceship canvas, attention locks, scrub knob, fan controls, and rail with real pre-softmax attention steering and measured attention from a local GGUF model. See [LOCAL_DEMO.md](LOCAL_DEMO.md) for setup, the intervention, scope, and verification. Run `bash scripts/setup-local.sh`, then `python3 native/server.py --model models/qwen2.5-0.5b-instruct-q4_k_m.gguf` and open http://127.0.0.1:8088.

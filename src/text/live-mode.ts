@@ -26,6 +26,7 @@ export function bindModeToggle(toggle: HTMLButtonElement, dialog: HTMLDialogElem
       const url = new URL(location.href)
       url.searchParams.delete("live")
       url.searchParams.set("local", "true")
+      url.searchParams.delete("sim")
       return location.assign(url)
     }
     if (choice !== "live") return
@@ -37,6 +38,9 @@ export function bindModeToggle(toggle: HTMLButtonElement, dialog: HTMLDialogElem
 function reloadAs(isLive: boolean) {
   const url = new URL(location.href)
   url.searchParams.delete("local")
+  url.searchParams.delete("engine")
+  if (!isLive) url.searchParams.set("sim", "true")
+  else url.searchParams.delete("sim")
   if (isLive) url.searchParams.set("live", "true")
   else url.searchParams.delete("live")
   location.assign(url)

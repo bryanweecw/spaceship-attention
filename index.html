@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Spaceship</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>" />
     <style>
@@ -648,6 +649,7 @@
         color: var(--ink-4);
       }
       /* Asks for the API keys each time live mode is entered. */
+      #browser-start,
       #live-keys {
         width: min(48ch, 100% - 2 * var(--padding));
         padding: calc(2 * var(--gap));
@@ -846,11 +848,92 @@
           color: var(--hot);
         }
       }
+
+      #browser-start {
+        max-height: 80dvh;
+        overflow: auto;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      #browser-start p,
+      #browser-start output {
+        display: block;
+        margin: 0 0 1rem;
+      }
+      #browser-load {
+        min-height: 44px;
+        width: 100%;
+      }
+      @media (pointer: coarse) {
+        :root {
+          --text-size: 14px;
+          --line: 23px;
+          --hud-size: 12px;
+          --numeral-size: 11px;
+          --tray-height: 40px;
+          --margin: 3ch;
+          --rail-width: 84px;
+          --padding: 20px;
+        }
+        #text {
+          width: max(24ch, min(58ch, calc(100% - 2 * (var(--margin) + var(--rail-width)))));
+          margin-left: max(calc(var(--rail-width) + 16px), calc((100% - 58ch) / 2));
+          margin-right: 16px;
+        }
+        #tray {
+          height: calc(var(--tray-height) + env(safe-area-inset-bottom));
+          padding-bottom: env(safe-area-inset-bottom);
+          justify-content: start;
+          overflow-x: auto;
+        }
+        .knob::before {
+          content: "";
+          position: absolute;
+          inset: -15px;
+          border-radius: 50%;
+        }
+        .knob {
+          -webkit-touch-callout: none;
+          user-select: none;
+        }
+        #text {
+          -webkit-touch-callout: none;
+          user-select: none;
+        }
+        #extra-link {
+          display: none;
+        }
+      }
+      @media (pointer: coarse) and (max-width: 500px) {
+        :root {
+          --rail-width: 48px;
+          --margin: 0ch;
+        }
+        #text {
+          width: calc(100% - 80px);
+          margin-left: 64px;
+        }
+        #rail .kw {
+          display: none;
+        }
+      }
     </style>
   </head>
   <body>
     <div id="rail" aria-hidden="true"></div>
     <div id="text"></div>
+    <dialog id="browser-start" aria-labelledby="browser-start-title">
+      <h2 id="browser-start-title">Spaceship · browser story</h2>
+      <p>Runs the model on your device. First download: 259 MB, cached when browser storage allows.</p>
+      <p>
+        Drag the main knob to reveal the story. Double-tap it for attention locks. Touch a word to lock it; drag a lock to move it. Double-tap and hold the knob
+        for its fan.
+      </p>
+      <p>Landscape gives the original canvas more room. Keep this tab open while the model runs.</p>
+      <output id="browser-progress" aria-live="polite">SmolLM2 360M · local WASM inference · real attention steering</output>
+      <button id="browser-load" type="button">Load model &amp; start</button>
+      <p><a href="?sim=true">Try the simulator without a model</a></p>
+    </dialog>
     <svg id="links" aria-hidden="true">
       <path id="attention-links" />
       <path id="attention-active-link" />
@@ -913,7 +996,7 @@
         /></label>
         <p class="actions">
           <button type="button" command="close" commandfor="live-keys">abort</button>
-          <button value="local" formnovalidate>local llama.cpp</button>
+          <button value="local" formnovalidate>browser model</button>
           <button value="live">launch</button>
         </p>
       </form>

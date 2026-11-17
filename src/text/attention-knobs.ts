@@ -61,12 +61,14 @@ export function createAttentionKnobs({ source, textElement, knob, linkPath, acti
   })
   textElement.addEventListener("pointerleave", () => hover(grabbed))
   textElement.addEventListener("dblclick", (event) => {
-    if (deleteBox(boxAt(pointOf(event)))) sounds.remove(event.pageX)
+    if (removeAt(pointOf(event))) sounds.remove(event.pageX)
   })
   document.addEventListener("pointerup", boxSelection)
 
   return {
     update,
+    selectSpan,
+    removeAt,
     prefetch,
     expand,
     collapse,
@@ -162,15 +164,19 @@ export function createAttentionKnobs({ source, textElement, knob, linkPath, acti
     const range = selection.getRangeAt(0)
     const start = textOffsetOf(textElement, range.startContainer, range.startOffset)
     const end = textOffsetOf(textElement, range.endContainer, range.endOffset)
+    if (!selectSpan({ start, end })) return
+    selection.removeAllRanges()
+    sounds.boxCreate(pageX)
+  }
+
+  function selectSpan({ start, end }: Span) {
     const first = words.findIndex((word) => word.end > start)
     const last = words.findLastIndex((word) => word.start < end)
-    if (first === -1 || last < first) return
-
+    if (first === -1 || last < first) return false
     const keyword = Math.floor((first + last) / 2)
-    selection.removeAllRanges()
     addBox({ keyword, before: keyword - first, after: last - keyword })
-    sounds.boxCreate(pageX)
     onChange()
+    return true
   }
 
   /** Adds `box` on top, replacing boxes on the same keyword. */
@@ -180,7 +186,8 @@ export function createAttentionKnobs({ source, textElement, knob, linkPath, acti
   }
 
   /** Returns whether there was a box to delete. */
-  function deleteBox(index: number) {
+  function removeAt(point: Point) {
+    const index = boxAt(point)
     if (index === -1) return false
     boxes.splice(index, 1)
     paint()

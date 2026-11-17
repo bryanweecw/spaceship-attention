@@ -1,0 +1,57 @@
+# Browser-only iPhone story
+
+This branch (`demo/iphone-story`) starts from the saved story checkpoint. It retains the original Spaceship canvas, attention boxes, scrubber, fan, rail, and sounds. The code-generation experiment remains on its separate branch.
+
+## Runtime
+
+The same patched llama.cpp revision (`c7518dbec59281c430ca5278ab4e60eadbc88b13`) runs inside a dedicated browser worker, compiled with Emscripten 7.0.0 to WASM32 SIMD. No Python server, local service, API key, hosted inference, JSPI, Memory64, or SharedArrayBuffer is required. This first deployment uses CPU WebAssembly, not WebGPU. It preserves the real additive pre-softmax key bias and the final-layer, head-averaged attention readback.
+
+SmolLM2 360M Instruct Q4_K_M is downloaded directly from a pinned Hugging Face revision. Its byte count, SHA-256, source URL, runtime filenames, and toolchain are recorded in `public/runtime/manifest.json`. First download: approximately 259 MiB. The worker streams it to the model filesystem and stores 4 MiB chunks in IndexedDB when browser storage is available. Subsequent loads reuse those chunks. Story text and controls stay in the browser.
+
+Context: 1,024 model tokens; 48 generated tokens per top-up; one inference thread. The 5 MiB WASM stack is required by inference kernels. Memory grows on demand with a 2 GiB address-space ceiling; that ceiling is not the amount allocated on load. Model-file staging is released after loading. Attention snapshots are capped at 256 on this mobile path.
+
+The compiled runtime is checked in so a static deployment needs only `npm ci` and `npm run build`. Weights, the native build, and the compiler installation remain ignored.
+
+## Use
+
+Open the deployed link in Safari on iOS 27. Tap **Load model & start**, allow the initial download and warm-up, then drag the main knob to reveal the story. Landscape gives the original composition more room. Tap a word for a lock, drag the lock to move it, and double-tap a lock to remove it. Double-tap the main knob to expand/release locks; double-tap and hold, then drag outward, for the fan. Visible knobs retain their original appearance with expanded touch hit areas.
+
+The rail reads measured attention, not semantic relevance or causal influence. Local fan axes suppress/amplify their named words. Automatic semantic pinning is not implemented. Pause-and-resume behavior, memory pressure, sustained speed, heat, and Safari storage persistence still need validation on a physical iPhone 16; WebKit automation is not a hardware performance result.
+
+If storage is unavailable, inference can still run, but the next load may download again. If the story reaches the mobile context limit, scrub backward or reload. A clearly labelled simulator is available before downloading; it is never substituted for model output automatically.
+
+## Local static preview
+
+```sh
+npm ci
+npm run build
+python3 -m http.server 8090 --bind 127.0.0.1 --directory dist
+```
+
+Then open http://127.0.0.1:8090. This is a static file server, not an inference backend. The original native comparison path remains available through `/index.html?engine=native&local=true` with `native/server.py` running locally.
+
+## Rebuild the WASM runtime
+
+```sh
+git clone https://github.com/emscripten-core/emsdk.git vendor/emsdk
+vendor/emsdk/emsdk install 7.0.0
+vendor/emsdk/emsdk activate 7.0.0
+# Restore the pinned llama.cpp checkout and apply patches/attention-bias.patch.
+# Download the model identified in public/runtime/manifest.json into models/.
+bash scripts/build-browser-runtime.sh
+npm run build
+```
+
+`native/browser/browser.cpp` implements model loading, exact-position tokenization, neutral prefill, live key biases, greedy decode, probabilities, and measured attention. `scripts/package-browser-runtime.mjs` hashes runtime artifacts and packages attribution. llama.cpp/ggml and nlohmann/json use MIT licences; Emscripten uses MIT/NCSA; SmolLM2 weights use Apache-2.0.
+
+## Verification and deployment
+
+```sh
+BROWSER_URL=http://127.0.0.1:8090 node tests/browser-story.mjs
+ENGINE=webkit BROWSER_URL=http://127.0.0.1:8090 node tests/browser-story.mjs
+npm run build
+node scripts/package-vercel.mjs
+vercel deploy --prebuilt --prod --scope bryanweecws-projects --yes
+```
+
+Browser checks load the real model, generate, create a touch lock, check portrait overflow, reopen the cached model, and compare neutral / zero-bias / steered next-token distributions and measured attention. They also assert no inference `/api` requests. Results are stored in `evidence/browser-story-*-check.json`. The deployed smoke check is separate from local verification and physical-device validation.

@@ -1,6 +1,6 @@
 {
-  "module": "/runtime/attention-accc4c0658e210da.js",
-  "wasm": "/runtime/attention-accc4c0658e210da.wasm",
+  "module": "/runtime/attention-42f126bd57f7e5f9.js",
+  "wasm": "/runtime/attention-42f126bd57f7e5f9.wasm",
   "llama_revision": "c7518dbec59281c430ca5278ab4e60eadbc88b13",
   "emscripten": "7.0.0",
   "backend": "WASM32 SIMD, one worker, no GPU required",

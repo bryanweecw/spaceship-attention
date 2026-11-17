@@ -5,6 +5,10 @@ import { centeredAt, type Point } from "../point.ts"
 import { createAttentionKnobs } from "./attention-knobs.ts"
 import { caretAt, isAhead, pointAt, type Caret, type TextMetrics } from "./caret.ts"
 import { simulatedSource } from "./completion.ts"
+import { createWritingSession } from "./composer/session.ts"
+import { createComposerDialog } from "./composer/dialog.ts"
+import { bindDraftCopy } from "./composer/copy.ts"
+import type { WritingSetup } from "./composer/examples.ts"
 import { createConnections } from "./connections.ts"
 import { makeDraggable } from "./drag.ts"
 import { generationDemand } from "./generation-demand.ts"
@@ -83,7 +87,8 @@ const browser =
         $("#browser-model-details"),
       )
     : undefined
-const local = isLocal ? createLocalSource(refreshRail, browser?.request, Boolean(browser)) : undefined
+const writing = createWritingSession()
+const local = isLocal ? createLocalSource(refreshRail, browser?.request, Boolean(browser), writing.current) : undefined
 const stream = createTextStream(local?.source ?? (isLive ? liveSource : simulatedSource), render)
 const rail = createLeftRail(railElement)
 const connections = createConnections({ source: isLocal ? async function* () {} : isLive ? liveInfluence : simulatedInfluence, onChange: refreshRail })
@@ -131,7 +136,8 @@ let topUpTimer: number | undefined
 let retryAt = 0
 let retryMs = RETRY_MS
 let isFutureStale = false
-let prepared: { text: string; layout: PreparedTextWithSegments } | undefined
+let isResetting = false
+let prepared: { text: string; preserve: boolean; layout: PreparedTextWithSegments } | undefined
 let holdSound: Sound | undefined
 /** Whether the current press opened the fan menu, so its double click does not also expand or collapse. */
 let didHold = false
@@ -139,6 +145,24 @@ let didHold = false
 let lastDrag: { point: Point; at: number } | undefined
 
 const canvas = createScrollableCanvas($("#canvas"), handle, scrubTo)
+
+const composer = createComposerDialog({
+  dialog: $<HTMLDialogElement>("#composer"),
+  current: writing.current,
+  draft: () => firstWords(stream.text, shownCount ?? 0),
+  start: startDraft,
+  continue: (instruction) => {
+    writing.continue(instruction)
+    local?.clearFailure()
+    regenerateFuture()
+  },
+})
+const composeToggle = $<HTMLButtonElement>("#compose-toggle")
+composeToggle.disabled = isLive || (isLocal && !browser)
+composeToggle.title = composeToggle.disabled ? "Writing prompts use the browser model." : "Start a draft or add an instruction for its continuation."
+composeToggle.addEventListener("click", () => composer.open())
+$("#browser-compose").addEventListener("click", () => composer.open(true))
+bindDraftCopy($<HTMLButtonElement>("#copy-draft"), () => firstWords(stream.text, shownCount ?? 0))
 
 bindModeToggle(modeToggle, $<HTMLDialogElement>("#live-keys"), isLive, isLocal)
 if (isLocal) {
@@ -207,6 +231,30 @@ moveTo(pointAt(caret, metricsOf()))
 setInterval(() => {
   if (stream.activity().isGenerating) report()
 }, 250)
+
+function startDraft(setup: WritingSetup) {
+  writing.start(setup)
+  isResetting = true
+  clearTimeout(dwellTimer)
+  clearTimeout(restTimer)
+  dwellCount++
+  isFutureStale = false
+  isRegenerationHeld = false
+  retryAt = 0
+  retryMs = RETRY_MS
+  attention.collapse()
+  futureKnobs.clear()
+  local?.reset()
+  prepared = undefined
+  caret = { line: 0, x: 0 }
+  stream.replace(setup.opening)
+  const end = caretAfterWords(countWords(setup.opening))
+  caret = { line: (end?.line ?? 0) + 5, x: element.getBoundingClientRect().width - 1 }
+  isResetting = false
+  moveTo(pointAt(caret, metricsOf()))
+  handle.scrollIntoView({ block: "center" })
+  topUp()
+}
 
 function scrubTo(point: Point) {
   handle.toggleAttribute("data-dragging", true)
@@ -286,6 +334,7 @@ function render() {
 
 /** The text after the knob was steered by the previous boxes and future knobs, so it is regenerated once they settle. */
 function invalidateFuture() {
+  if (isResetting) return
   refreshRail()
   isFutureStale = true
   restartDwell()
@@ -307,6 +356,7 @@ function report() {
     steering: futureKnobs.controls().length,
     pinned: futureKnobs.pinnedCount(),
   })
+  if (local?.finished() && buffer === 0) statusElement.querySelector<HTMLElement>('[data-field="activity"] b')!.textContent = "draft complete"
   if (local?.failure()) statusElement.textContent = `${local.failure()}. ${browser ? "Scrub back or reload to retry." : "Start native/server.py and reload."}`
 }
 
@@ -335,6 +385,7 @@ function afterStreaming(request: () => void) {
 }
 
 function regenerateFuture() {
+  local?.clearFailure()
   isFutureStale = false
   restCount = shownCount ?? 0
   void stream.regenerate(shownCount ?? 0, "steering changed", steering()).catch((error) => console.error(error))
@@ -356,7 +407,7 @@ function scheduleTopUp() {
 }
 
 function topUp() {
-  if (isRegenerationHeld || local?.failure() || stream.activity().isGenerating || performance.now() < retryAt) return
+  if (isResetting || isRegenerationHeld || local?.finished() || local?.failure() || stream.activity().isGenerating || performance.now() < retryAt) return
   const words = countWords(stream.text)
   if (!generationDemand(prepareWords(), caret, element.getBoundingClientRect().width, stream.text, shownCount ?? 0, BUFFER_WORDS).needsGeneration) return
   stream.generate("buffer low", steering()).then(
@@ -379,7 +430,9 @@ function settleTopUp(wordsBefore: number) {
 
 function prepareWords() {
   const text = stream.text
-  if (prepared?.text !== text) prepared = { text, layout: prepareWithSegments(text, style.font) }
+  const preserve = writing.current().kind === "document"
+  if (prepared?.text !== text || prepared.preserve !== preserve)
+    prepared = { text, preserve, layout: prepareWithSegments(text, style.font, { whiteSpace: preserve ? "pre-wrap" : "normal" }) }
   return prepared.layout
 }
 
@@ -399,6 +452,8 @@ function pointerTargets(): PointerTarget[] {
     })),
     { rects: [modeToggle.getBoundingClientRect()], pad: TRAY_PAD_PX, isHotOnHover: true, wake: modeToggle },
     { rects: [soundToggle.getBoundingClientRect()], pad: TRAY_PAD_PX, isHotOnHover: true, wake: soundToggle },
+    { rects: [composeToggle.getBoundingClientRect()], pad: TRAY_PAD_PX, isHotOnHover: true, wake: composeToggle },
+    { rects: [$("#copy-draft").getBoundingClientRect()], pad: TRAY_PAD_PX, isHotOnHover: true, wake: $("#copy-draft") },
     { rects: [extraLink.getBoundingClientRect()], pad: TRAY_PAD_PX, isHotOnHover: true, wake: extraLink },
   ]
 }

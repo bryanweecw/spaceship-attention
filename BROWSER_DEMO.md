@@ -71,3 +71,17 @@ The story sampler excludes end-of-generation tokens so the raw story prefix keep
 The semantic story canvas extends beyond the viewport and grows as the cursor advances. Swipe unboxed text or blank canvas to pan; touching a lock still drags it. Drag the main knob near a vertical edge to scroll through more canvas. Larger explicit hit targets, WebKit selection/callout CSS, targeted touch-start cancellation, and selection/context-menu suppression keep the hold fan gesture separate from native text selection. Desktop text selection remains available.
 
 `node tests/mobile-canvas.mjs` verifies native touch swipes, expanded-target double-tap-and-hold, empty selection, suppressed context menu, edge scrolling and document growth in mobile Chromium. This is not a physical iPhone result. `tests/model-story.mjs` records real continuation samples, checks for repeated eight-word passages and quiz formatting, and optionally verifies cache rollover with the fixed framing. These are sample regressions, not a general quality guarantee.
+
+## Composer prototype
+
+Use **Start with your own prompt** before loading the model, or **compose** in the tray afterward. Choose **Start a new draft** for editable documentation, proposal, email, original-story or custom starters. Set the writing prompt and optionally paste opening text; leave the opening blank to generate from scratch. Starting replaces the canvas and clears its locks and fans.
+
+Choose **Continue the current draft** to preserve text up to the cursor and its steering controls. Leave the new instruction empty to retain the original writing prompt; fill it to append direction for the next text only. Both paths discard the buffered future and generate a new continuation with real attention bias. New text begins at the cursor; earlier text stays as written. Instructions are kept separate from visible draft tokens and remain local to the worker.
+
+Document mode preserves paragraphs, Markdown source and email line breaks on the canvas and in **copy draft**. Copy exports text up to the cursor, excluding the buffered future; if the clipboard is unavailable it downloads a plain `.txt` file. Drafts and writing instructions live in the tab and are not automatically saved. Copy before reloading. The prototype edits and exports plain text.
+
+Document tasks may produce an end-of-generation token: generation then stops rather than retrying forever. Remaining buffered text can still be revealed. The tray shows **draft complete** once all generated text is visible. Story mode retains ongoing generation. The browser attention window is still bounded; long instructions receive a visible length error.
+
+Validation: `node tests/composer-state.mjs` checks instruction retention/appending, limits, raw paragraphs and completion state. `node tests/composer-browser.mjs` uses real Qwen in mobile WebKit to start before model load, retain locks and committed text with both continuation paths, copy paragraphs and reset for a new draft. `node tests/composer-samples.mjs` records real documentation/proposal/email/blank-draft samples and verifies document attention changes. Sample outputs still require review for factual accuracy and instruction adherence. Physical iPhone testing remains separate.
+
+Browser prompt preparation yields between 64-token decode batches and accepts cancellation messages. Changing prompts during preparation abandons the old request at the next batch boundary rather than finishing its entire prefill. A single in-flight batch still runs to completion.

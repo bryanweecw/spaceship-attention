@@ -618,6 +618,8 @@
       #status {
         display: contents;
       }
+      #compose-toggle,
+      #copy-draft,
       #mode-toggle,
       #sound-toggle,
       #extra-link {
@@ -864,6 +866,68 @@
         }
       }
 
+      #composer {
+        width: min(64ch, calc(100% - 32px));
+        max-height: 85dvh;
+        overflow: auto;
+        padding: 16px;
+        background: var(--bg);
+        color: var(--ink);
+        border: 1px solid var(--ink-2);
+        font: inherit;
+        font-size: 14px;
+        line-height: 1.5;
+        &::backdrop {
+          background: rgb(0 0 0 / 0.7);
+        }
+        form,
+        section {
+          display: grid;
+          gap: 8px;
+        }
+        [hidden] {
+          display: none;
+        }
+        h2,
+        p {
+          margin: 0;
+          font: inherit;
+        }
+        fieldset {
+          margin: 0;
+          padding: 8px;
+        }
+        fieldset label {
+          display: block;
+        }
+        textarea,
+        select,
+        button {
+          font: inherit;
+        }
+        textarea,
+        select {
+          width: 100%;
+          box-sizing: border-box;
+          min-height: 44px;
+          font-size: 16px;
+        }
+        textarea {
+          resize: vertical;
+        }
+        button {
+          min-height: 44px;
+        }
+        #composer-current-prompt {
+          white-space: pre-wrap;
+        }
+        .composer-actions {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: end;
+          gap: 8px;
+        }
+      }
       #browser-start {
         max-height: 80dvh;
         overflow: auto;
@@ -945,7 +1009,7 @@
       <div id="rail" aria-hidden="true"></div>
       <div id="text"></div>
       <dialog id="browser-start" aria-labelledby="browser-start-title">
-        <h2 id="browser-start-title">Spaceship · browser story</h2>
+        <h2 id="browser-start-title">Spaceship · local writing</h2>
         <p>Runs entirely on your device.</p>
         <label for="browser-model">Model</label>
         <select id="browser-model" aria-describedby="browser-model-details">
@@ -955,6 +1019,7 @@
         <p id="browser-model-details"></p>
         <output id="browser-progress" aria-live="polite">Local WASM inference · real attention steering</output>
         <button id="browser-load" type="button">Load model &amp; start</button>
+        <button id="browser-compose" type="button">Start with your own prompt</button>
         <details>
           <summary>Controls and scrolling</summary>
           <p>
@@ -992,10 +1057,60 @@
     <div id="cursor" aria-hidden="true"></div>
     <footer id="tray">
       <button id="mode-toggle" type="button" aria-pressed="false" aria-label="flight mode">mode<b>sim</b></button>
+      <button id="compose-toggle" type="button">compose</button>
+      <button id="copy-draft" type="button" title="Copy the text up to the cursor with paragraph breaks; saves a .txt file if clipboard access is unavailable.">
+        copy draft
+      </button>
       <output id="status" aria-live="off"></output>
       <button id="sound-toggle" type="button" aria-pressed="true" aria-label="sound">♪<b>on</b></button>
       <a id="extra-link" href="extra/style-1.html">extra</a>
     </footer>
+    <dialog id="composer" aria-labelledby="composer-title" closedby="closerequest">
+      <form>
+        <h2 id="composer-title">Compose a draft</h2>
+        <p>Drafts stay in this tab. Copy your draft before reloading.</p>
+        <fieldset>
+          <legend>What would you like to do?</legend>
+          <label><input type="radio" name="compose-action" value="start" /> Start a new draft</label>
+          <label><input type="radio" name="compose-action" value="continue" checked /> Continue the current draft</label>
+        </fieldset>
+        <section id="composer-start-fields" hidden>
+          <label for="composer-template">Starter example</label>
+          <select id="composer-template">
+            <option value="documentation">Documentation writer</option>
+            <option value="proposal">Proposal writer</option>
+            <option value="email">Email composer</option>
+            <option value="story">Original spaceship story</option>
+            <option value="custom">Custom prompt</option>
+          </select>
+          <label for="composer-prompt">Writing prompt</label>
+          <textarea
+            id="composer-prompt"
+            rows="4"
+            maxlength="1200"
+            placeholder="Describe what you want to write, who it is for and the facts to use."
+          ></textarea>
+          <label for="composer-opening">Opening or existing draft (optional)</label>
+          <textarea id="composer-opening" rows="5" maxlength="12000" placeholder="Paste a draft to extend, or leave blank to write from scratch."></textarea>
+          <p>Starting a new draft replaces the canvas text and clears its locks.</p>
+        </section>
+        <section id="composer-continue-fields">
+          <p>Current writing prompt</p>
+          <p id="composer-current-prompt"></p>
+          <label for="composer-extra">New instruction for what comes next (optional)</label>
+          <textarea id="composer-extra" rows="4" maxlength="600" placeholder="For example: Next, explain the risks and suggest a small pilot."></textarea>
+          <p>
+            Leave this empty to keep the original prompt and steer with locks and fans. Continue keeps the text up to the cursor and your steering controls,
+            then replaces the buffered future. New instructions affect the continuation only.
+          </p>
+        </section>
+        <output id="composer-feedback" aria-live="polite"></output>
+        <div class="composer-actions">
+          <button id="composer-cancel" type="button">Cancel</button>
+          <button id="composer-apply" type="submit" value="apply">Continue from cursor</button>
+        </div>
+      </form>
+    </dialog>
     <dialog id="live-keys" aria-labelledby="live-keys-title" aria-describedby="live-keys-note" closedby="closerequest">
       <form method="dialog" autocomplete="off">
         <h2 id="live-keys-title">launch</h2>

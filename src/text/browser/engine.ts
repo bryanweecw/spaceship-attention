@@ -51,7 +51,7 @@ export function createBrowserEngine(
       () => dialog.close(),
       (error) => {
         failed = true
-        progress.value = `${error.message} No story text was sent to a server.`
+        progress.value = `${error.message} No draft text was sent to a server.`
         loadButton.textContent = "Reload to retry"
         loadButton.disabled = false
       },
@@ -60,10 +60,11 @@ export function createBrowserEngine(
   dialog.addEventListener("cancel", (event) => event.preventDefault())
   dialog.showModal()
   return {
-    async request<T>(path: string, body?: unknown): Promise<T> {
+    async request<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
       await started
       await loading
-      return send(path.endsWith("init") ? "init" : "step", body) as Promise<T>
+      signal?.throwIfAborted()
+      return send(path.endsWith("init") ? "init" : "step", body, signal) as Promise<T>
     },
   }
 
@@ -72,10 +73,12 @@ export function createBrowserEngine(
     modelDetails.textContent = `${Math.ceil(model.bytes / 1048576)} MiB download; cached when storage allows. ${model.id === DEFAULT_MODEL ? "Uses more memory and may run slower." : "Smaller download and memory use."}`
   }
 
-  function send(op: string, body?: unknown): Promise<unknown> {
+  function send(op: string, body?: unknown, signal?: AbortSignal): Promise<unknown> {
     if (runtimeFailure) return Promise.reject(runtimeFailure)
     return new Promise((resolve, reject) => {
       const key = ++id
+      const cancel = () => worker.postMessage({ id: key, op: "cancel" })
+      signal?.addEventListener("abort", cancel, { once: true })
       const timeout =
         op === "load"
           ? undefined
@@ -91,10 +94,12 @@ export function createBrowserEngine(
       pending.set(key, {
         resolve(value) {
           clearTimeout(timeout)
+          signal?.removeEventListener("abort", cancel)
           resolve(value)
         },
         reject(error) {
           clearTimeout(timeout)
+          signal?.removeEventListener("abort", cancel)
           reject(error)
         },
       })

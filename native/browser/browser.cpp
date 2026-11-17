@@ -58,6 +58,7 @@ static size_t decoded = 0;
 static std::vector<int> positions;
 static int next_position = 0;
 static int opening_size = 64;
+static bool endless = true;
 static std::vector<llama_token> recent_tokens;
 static std::mt19937 random_state(42);
 
@@ -104,11 +105,19 @@ static json handle(const json & req) {
     if (!ctx) throw std::runtime_error("Load the model first.");
     if (req.at("op") == "init") {
         const std::string prompt = req.at("prompt");
-        if (prompt.empty() || prompt.size() > 1200000) throw std::runtime_error("Story is empty or too long.");
-        const std::string framing = "<|im_start|>system\nYou write an ongoing science-fiction story. Stay in the scene and develop new events. Write only story prose, without commentary, quizzes, summaries, or repeated sentences.<|im_end|>\n<|im_start|>user\nTell the story.<|im_end|>\n<|im_start|>assistant\n";
+        const std::string instruction = req.value("instruction", std::string());
+        endless = req.value("kind", std::string("story")) != "document";
+        if (prompt.size() > 1200000 || instruction.size() > 6000 || (prompt.empty() && instruction.empty())) throw std::runtime_error("Enter a writing prompt or opening text within the demo limits.");
+        std::string framing = "<|im_start|>system\nYou write an ongoing science-fiction story. Stay in the scene and develop new events. Write only story prose, without commentary, quizzes, summaries, or repeated sentences.<|im_end|>\n<|im_start|>user\nTell the story.<|im_end|>\n<|im_start|>assistant\n";
+        if (!instruction.empty() || !endless) {
+            const std::string system = endless
+                ? "Continue an ongoing story directly from its ending. Write only story prose and develop new events without repeating passages."
+                : "You are a careful writing assistant. Continue the draft directly from its ending. Output only the requested document or email, without commentary. Follow the requirements and do not invent unsupported facts. Finish when the draft is complete.";
+            framing = "<|im_start|>system\n" + system + "<|im_end|>\n<|im_start|>user\n" + instruction + "<|im_end|>\n<|im_start|>assistant\n";
+        }
         const auto hidden = tokenize(framing, true);
         const auto story = tokenize(prompt, false);
-        if (story.empty()) throw std::runtime_error("Story is too short.");
+        if (hidden.size() > 448) throw std::runtime_error("The writing prompt is too long for the browser attention window. Shorten it and try again.");
         std::vector<llama_token> full_tokens = hidden;
         full_tokens.insert(full_tokens.end(), story.begin(), story.end());
         const int n = full_tokens.size();
@@ -132,14 +141,18 @@ static json handle(const json & req) {
         llama_memory_clear(llama_get_memory(ctx), true);
         if (!llama_set_attention_bias(ctx, nullptr, 0)) throw std::runtime_error("This model does not support our attention cache.");
         decoded = 0;
-        while (decoded+1 < tokens.size()) {
+        return {{"tokens", spans}, {"prompt_tokens", tokens.size()}, {"total_prompt_tokens", n}, {"context", 1024}, {"opening_tokens", opening_size}, {"prompt", prompt}};
+    }
+    if (req.at("op") == "prefill") {
+        if (tokens.empty()) throw std::runtime_error("Start a draft first.");
+        if (decoded+1 < tokens.size()) {
             const size_t count = std::min(size_t(64), tokens.size()-1-decoded);
             decode(decoded, count); decoded += count;
         }
-        return {{"tokens", spans}, {"prompt_tokens", tokens.size()}, {"total_prompt_tokens", n}, {"context", 1024}, {"opening_tokens", opening_size}, {"prompt", prompt}};
+        return {{"ready", decoded+1 == tokens.size()}, {"decoded", decoded}};
     }
     if (req.at("op") == "step") {
-        if (tokens.empty()) throw std::runtime_error("Start the story first.");
+        if (tokens.empty() || decoded+1 != tokens.size()) throw std::runtime_error("Prepare the draft before generating.");
         bool shifted = false;
         if (tokens.size() >= 1024) {
             auto memory = llama_get_memory(ctx);
@@ -163,7 +176,7 @@ static json handle(const json & req) {
         const int nv = llama_vocab_n_tokens(vocab);
         const float * raw_logits = llama_get_logits_ith(ctx, -1);
         std::vector<float> logits(raw_logits, raw_logits + nv);
-        for (int i = 0; i < nv; ++i) if (llama_vocab_is_eog(vocab, i) || llama_vocab_is_control(vocab, i)) logits[i] = -INFINITY;
+        for (int i = 0; i < nv; ++i) if ((endless && llama_vocab_is_eog(vocab, i)) || (llama_vocab_is_control(vocab, i) && (endless || !llama_vocab_is_eog(vocab, i)))) logits[i] = -INFINITY;
         std::unordered_map<int, int> counts;
         for (auto it = recent_tokens.end()-std::min(size_t(128), recent_tokens.size()); it != recent_tokens.end(); ++it) ++counts[*it];
         for (const auto & [id, count] : counts) logits[id] = (logits[id] > 0 ? logits[id]/1.12f : logits[id]*1.12f) - 0.1f*count - 0.15f;

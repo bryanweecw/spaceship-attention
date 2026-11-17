@@ -1,3 +1,4 @@
+import { WRITING_EXAMPLES, type WritingSetup } from "../composer/examples.ts"
 import { request, type Decode, type PromptSession, type PromptToken } from "../../local/generation.ts"
 import type { AttentionSource } from "../attention.ts"
 import type { DimensionSource } from "../dimension.ts"
@@ -7,19 +8,22 @@ import { wordSpans, collapsedSpan, type Span } from "../segments.ts"
 import type { TextSource } from "../text-stream.ts"
 import { attentionBias, wordDimensions, byteSpan } from "./steering.ts"
 
-const OPENING =
-  "The spaceship carried two things: a greenhouse full of roses and a damaged engine. Mira loved the garden, but the mechanic worried about the reactor. When she opened the hatch, she found"
-
 type Snapshot = { context: string; tokens: PromptToken[]; attention: number[]; layer: number }
 
 /** Owns inference ordering and measured attention for the original canvas, including its buffered future. */
-export function createLocalSource(onMeasurement: () => void, infer: typeof request = request, browserRuntime = false) {
+export function createLocalSource(
+  onMeasurement: () => void,
+  infer: typeof request = request,
+  browserRuntime = false,
+  writing: () => WritingSetup = () => ({ ...WRITING_EXAMPLES.story, instruction: "" }),
+) {
   let pending = Promise.resolve()
   let snapshots: Snapshot[] = []
   let failure: string | undefined
+  let finished = false
   let continuation: { prompt: string; context: string; steering: string; session: PromptSession; tokens: PromptToken[] } | undefined
   const source: TextSource = {
-    expand: (text) => text || OPENING,
+    expand: (text) => text || writing().opening,
     async *complete(prefix, steering, signal) {
       const previous = pending
       let release!: () => void
@@ -29,24 +33,31 @@ export function createLocalSource(onMeasurement: () => void, infer: typeof reque
       await previous
       try {
         signal.throwIfAborted()
-        const prompt = normalize(prefix)
-        const signature = JSON.stringify({ leads: steering.leads.map(({ keyword, keywordSpan }) => ({ keyword, keywordSpan })), controls: steering.controls })
+        const prompt = browserRuntime ? prefix : normalize(prefix)
+        const setup = writing()
+        finished = false
+        const signature = JSON.stringify({
+          instruction: setup.instruction,
+          kind: setup.kind,
+          leads: steering.leads.map(({ keyword, keywordSpan }) => ({ keyword, keywordSpan })),
+          controls: steering.controls,
+        })
         const cached =
           (browserRuntime || steering.controls.length === 0) && continuation?.prompt === prompt && continuation.steering === signature
             ? continuation
             : undefined
         continuation = undefined
         failure = undefined
-        const session = cached?.session ?? (await infer<PromptSession>("/api/init", { prompt }))
+        const session = cached?.session ?? (await infer<PromptSession>("/api/init", { prompt, instruction: setup.instruction, kind: setup.kind }, signal))
         signal.throwIfAborted()
-        snapshots = snapshots.filter(({ context }) => prompt.startsWith(normalize(context)) && normalize(context).length < prompt.length)
-        const bias = attentionBias(prompt, cached?.tokens ?? session.tokens, steering.leads, steering.controls, cached?.context ?? prompt)
+        snapshots = snapshots.filter(({ context }) => normalize(prompt).startsWith(normalize(context)) && normalize(context).length < normalize(prompt).length)
+        const bias = attentionBias(normalize(prompt), cached?.tokens ?? session.tokens, steering.leads, steering.controls, cached?.context ?? prompt)
         let tokens = [...(cached?.tokens ?? session.tokens)]
         let context = cached?.context ?? prompt
         let emitted = prompt
         failure = undefined
         for (let i = 0; i < (browserRuntime ? 48 : 256) && !signal.aborted; i++) {
-          const result = await infer<Decode>("/api/step", { session: session.session, bias })
+          const result = await infer<Decode>("/api/step", { session: session.session, bias }, signal)
           if (signal.aborted) return
           if (result.retained_positions) {
             const retained = new Set(result.retained_positions)
@@ -57,7 +68,10 @@ export function createLocalSource(onMeasurement: () => void, infer: typeof reque
             if (snapshots.length > (browserRuntime ? 256 : 2048)) snapshots.shift()
             onMeasurement()
           }
-          if (result.done) return
+          if (result.done) {
+            finished = true
+            return
+          }
           const start = new TextEncoder().encode(context).length
           tokens.push({
             position: result.next_position ?? tokens.length,
@@ -67,7 +81,7 @@ export function createLocalSource(onMeasurement: () => void, infer: typeof reque
             end: start + new TextEncoder().encode(result.text).length,
           })
           context += result.text
-          const next = normalize(context)
+          const next = browserRuntime ? context : normalize(context)
           if (next.length > emitted.length) yield next.slice(emitted.length)
           emitted = next
         }
@@ -111,8 +125,16 @@ export function createLocalSource(onMeasurement: () => void, infer: typeof reque
     railState,
     relevanceOf,
     failure: () => failure,
+    finished: () => finished,
+    reset() {
+      snapshots = []
+      continuation = undefined
+      failure = undefined
+      finished = false
+    },
     clearFailure: () => {
       failure = undefined
+      finished = false
     },
   }
 

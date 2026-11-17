@@ -1,0 +1,57 @@
+{
+  "backend": "real Qwen WASM in WebKit",
+  "start_before_model_load": true,
+  "steering_only_preserves_prompt": true,
+  "new_instruction_preserves_draft_and_locks": true,
+  "copied_paragraphs": "Subject: Accessibility audit review\n\nHi Sam,\n\nI hope this email finds you well. I wanted to schedule a",
+  "new_draft_clears_locks": true,
+  "portrait_overflow": false,
+  "errors": [],
+  "init_requests": [
+    {
+      "id": 2,
+      "op": "init",
+      "body": {
+        "prompt": "Subject: Accessibility audit review\n\nHi Sam,\n\n",
+        "instruction": "Draft a short email to Sam asking for a 20-minute meeting next week to review an accessibility audit. Use a warm, direct tone. Ask which time works for Sam. Do not invent audit findings or promise fixes. Write only the email.",
+        "kind": "document"
+      }
+    },
+    {
+      "id": 18,
+      "op": "init",
+      "body": {
+        "prompt": "Subject: Accessibility audit review\n\nHi Sam,\n\nI hope this email finds you well. I wanted to schedule a",
+        "instruction": "Draft a short email to Sam asking for a 20-minute meeting next week to review an accessibility audit. Use a warm, direct tone. Ask which time works for Sam. Do not invent audit findings or promise fixes. Write only the email.",
+        "kind": "document"
+      }
+    },
+    {
+      "id": 20,
+      "op": "init",
+      "body": {
+        "prompt": "Subject: Accessibility audit review\n\nHi Sam,\n\nI hope this email finds you well. I wanted to schedule a",
+        "instruction": "Draft a short email to Sam asking for a 20-minute meeting next week to review an accessibility audit. Use a warm, direct tone. Ask which time works for Sam. Do not invent audit findings or promise fixes. Write only the email.",
+        "kind": "document"
+      }
+    },
+    {
+      "id": 21,
+      "op": "init",
+      "body": {
+        "prompt": "Subject: Accessibility audit review\n\nHi Sam,\n\nI hope this email finds you well. I wanted to schedule a",
+        "instruction": "Draft a short email to Sam asking for a 20-minute meeting next week to review an accessibility audit. Use a warm, direct tone. Ask which time works for Sam. Do not invent audit findings or promise fixes. Write only the email.\n\nDirection for the next text only:\nNext, offer Tuesday at 10am as a flexible meeting time.",
+        "kind": "document"
+      }
+    },
+    {
+      "id": 23,
+      "op": "init",
+      "body": {
+        "prompt": "# sprout quick start\n\n",
+        "instruction": "Write a concise quick-start guide for sprout, a toy folder-backup CLI. Its only supported command is: sprout backup ./notes --output notes.zip. Explain purpose, usage and limitations. It makes local zip archives; it has no cloud sync or encryption. Do not invent other features or commands. Use Markdown.",
+        "kind": "document"
+      }
+    }
+  ]
+}

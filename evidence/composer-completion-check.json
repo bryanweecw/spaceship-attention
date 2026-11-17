@@ -1,0 +1,9 @@
+{
+  "text": "Thank you Sam for the helpful review.",
+  "init": {
+    "prompt": "",
+    "instruction": "Write one short sentence thanking Sam for the helpful review. Output only the sentence and finish.",
+    "kind": "document"
+  },
+  "steps": 9
+}

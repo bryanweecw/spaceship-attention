@@ -14,7 +14,8 @@ export type Decode = {
   top: { id: number; text: string; probability: number }[]
 }
 
-export async function request<T>(path: string, body?: unknown): Promise<T> {
+export async function request<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  signal?.throwIfAborted()
   const response = await fetch(
     path,
     body === undefined ? undefined : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },

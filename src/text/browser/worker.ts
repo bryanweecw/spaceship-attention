@@ -2,8 +2,14 @@ import { loadModelFile, type ModelFileSystem } from "./model.ts"
 type Runtime = { ccall(name: string, result: string, types: string[], values: string[]): string; FS: ModelFileSystem }
 let runtime: Runtime
 let session = ""
+let preparing: number | undefined
+const cancelled = new Set<number>()
 
 self.onmessage = async ({ data: { id, op, body } }) => {
+  if (op === "cancel") {
+    if (preparing === id) cancelled.add(id)
+    return
+  }
   try {
     if (op === "load") {
       const manifest = await fetch("/runtime/manifest.json", { cache: "no-store" }).then((r) => r.json())
@@ -20,7 +26,14 @@ self.onmessage = async ({ data: { id, op, body } }) => {
     }
     if (!runtime) throw new Error("Load the browser model first.")
     if (op === "init") {
-      const result = call({ op, prompt: body.prompt })
+      if (preparing !== undefined) throw new Error("Wait for the current draft preparation to stop.")
+      preparing = id
+      const result = call({ op, prompt: body.prompt, instruction: body.instruction ?? "", kind: body.kind ?? "story" })
+      for (;;) {
+        if (cancelled.has(id)) throw new Error("Draft preparation cancelled.")
+        if (call({ op: "prefill" }).ready) break
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      }
       session = crypto.randomUUID()
       self.postMessage({ id, result: { ...result, session } })
     } else {
@@ -29,6 +42,9 @@ self.onmessage = async ({ data: { id, op, body } }) => {
     }
   } catch (error) {
     self.postMessage({ id, error: error instanceof Error ? error.message : String(error) })
+  } finally {
+    cancelled.delete(id)
+    if (preparing === id) preparing = undefined
   }
 }
 

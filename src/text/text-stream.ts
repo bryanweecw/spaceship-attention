@@ -45,6 +45,7 @@ export function createTextStream({ expand, complete }: TextSource, onChange: () 
     regenerate,
     activity,
     streaming,
+    replace,
   }
 
   /**
@@ -118,6 +119,16 @@ export function createTextStream({ expand, complete }: TextSource, onChange: () 
         onChange()
       }
     }
+  }
+
+  function replace(next: string) {
+    active?.abort()
+    active = undefined
+    text = next
+    openingWords = countWords(next)
+    timing = undefined
+    release()
+    onChange()
   }
 
   /** Cutting inside the expanded opening is a no-op unless `count` is zero. */

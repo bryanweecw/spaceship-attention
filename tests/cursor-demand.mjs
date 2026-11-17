@@ -11,7 +11,7 @@ try {
     await page.context().route("**/runtime/manifest.json", async (route) => {
       const response = await route.fetch()
       const manifest = await response.json()
-      manifest.model.url = process.env.MODEL_URL
+      manifest.models.find((model) => model.id === (process.env.MODEL_ID ?? "qwen2.5-0.5b")).url = process.env.MODEL_URL
       await route.fulfill({ json: manifest })
     })
   page.on("console", (message) => {
@@ -45,6 +45,7 @@ try {
     }
   })
   await page.goto(process.env.BROWSER_URL ?? "http://127.0.0.1:8090")
+  if (process.env.MODEL_ID) await page.locator("#browser-model").selectOption(process.env.MODEL_ID)
   await page.locator("#browser-load").click()
   await page.waitForFunction(() => !document.querySelector("#browser-start").open, null, { timeout: 240000 })
   await page.waitForFunction(() => document.querySelector("[data-field=activity]").textContent.includes("preparing"))

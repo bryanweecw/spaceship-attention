@@ -1,0 +1,11 @@
+{
+  "simulator": true,
+  "native_touch_scroll": true,
+  "expanded_target_hold": true,
+  "no_selection": true,
+  "suppressed_contextmenu": true,
+  "edge_scroll_pixels": 879,
+  "extent_before": 786,
+  "extent_after": 1632,
+  "errors": []
+}

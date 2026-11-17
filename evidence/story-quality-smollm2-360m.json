@@ -1,0 +1,13 @@
+{
+  "modelId": "smollm2-360m",
+  "loaded": {
+    "ready": true,
+    "context": 1024,
+    "backend": "WASM SIMD, single worker",
+    "cached": false,
+    "cacheStored": true,
+    "model": "SmolLM2 360M Instruct · Q4_K_M"
+  },
+  "opening": "The spaceship carried two things: a greenhouse full of roses and a damaged engine. Mira loved the garden, but the mechanic worried about the reactor. When she opened the hatch, she found",
+  "generated": " it locked behind her, its screen still intact despite the damage.\n\nAs she waited for the repair crew to arrive, she noticed that the interior was littered with strange objects – old tools, broken machinery parts, and mysterious artifacts from other planets. It seemed like they were trying to tell her something, but what? She realized it only made sense if these items held secrets about their own histories or even their future destinations.\n\nMira decided to investigate further. She took out her camera to snap photos of every object around her. The sun caught a small piece of metal stuck in the engine compartment, giving it an unusual color. She remembered seeing similar pieces on Mars when she first arrived. As she examined each item more closely, she began to realize that some were connected by threads of"
+}

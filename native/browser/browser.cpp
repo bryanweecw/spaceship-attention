@@ -8,6 +8,8 @@
 #include <cstring>
 #include <iostream>
 #include <numeric>
+#include <random>
+#include <unordered_map>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -55,6 +57,16 @@ static std::vector<llama_token> tokens;
 static size_t decoded = 0;
 static std::vector<int> positions;
 static int next_position = 0;
+static int opening_size = 64;
+static std::vector<llama_token> recent_tokens;
+static std::mt19937 random_state(42);
+
+static std::vector<llama_token> tokenize(const std::string & text, bool special) {
+    const int n = -llama_tokenize(vocab, text.data(), text.size(), nullptr, 0, special, special);
+    std::vector<llama_token> result(n);
+    if (llama_tokenize(vocab, text.data(), text.size(), result.data(), n, special, special) != n) throw std::runtime_error("Tokenization failed.");
+    return result;
+}
 
 static void decode(size_t start, size_t count) {
     auto b = llama_batch_init(count, 0, 1);
@@ -93,17 +105,24 @@ static json handle(const json & req) {
     if (req.at("op") == "init") {
         const std::string prompt = req.at("prompt");
         if (prompt.empty() || prompt.size() > 1200000) throw std::runtime_error("Story is empty or too long.");
-        const int n = -llama_tokenize(vocab, prompt.data(), prompt.size(), nullptr, 0, true, false);
-        if (n < 2) throw std::runtime_error("Story is too short.");
-        std::vector<llama_token> full_tokens(n);
-        if (llama_tokenize(vocab, prompt.data(), prompt.size(), full_tokens.data(), n, true, false) != n) throw std::runtime_error("Tokenization failed.");
+        const std::string framing = "<|im_start|>system\nYou write an ongoing science-fiction story. Stay in the scene and develop new events. Write only story prose, without commentary, quizzes, summaries, or repeated sentences.<|im_end|>\n<|im_start|>user\nTell the story.<|im_end|>\n<|im_start|>assistant\n";
+        const auto hidden = tokenize(framing, true);
+        const auto story = tokenize(prompt, false);
+        if (story.empty()) throw std::runtime_error("Story is too short.");
+        std::vector<llama_token> full_tokens = hidden;
+        full_tokens.insert(full_tokens.end(), story.begin(), story.end());
+        const int n = full_tokens.size();
+        opening_size = hidden.size() + 64;
+        const int tail_size = 768-opening_size;
         json spans = json::array(); size_t offset = 0;
         std::string rebuilt;
         tokens.clear(); positions.clear(); next_position = n;
-        // Preserve the story's opening and recent continuation within a bounded attention window.
+        recent_tokens.assign(story.begin() + std::max(0, int(story.size())-512), story.end());
+        random_state.seed(42);
         for (int i = 0; i < n; ++i) {
-            const auto text = piece(vocab, full_tokens[i]); rebuilt += text;
-            if (n <= 768 || i < 64 || i >= n-704) {
+            const auto text = i < int(hidden.size()) ? std::string() : piece(vocab, full_tokens[i]);
+            rebuilt += text;
+            if (n <= 768 || i < opening_size || i >= n-tail_size) {
                 spans.push_back({{"position", i}, {"id", full_tokens[i]}, {"text", text}, {"start", offset}, {"end", offset+text.size()}});
                 tokens.push_back(full_tokens[i]); positions.push_back(i);
             }
@@ -117,17 +136,17 @@ static json handle(const json & req) {
             const size_t count = std::min(size_t(64), tokens.size()-1-decoded);
             decode(decoded, count); decoded += count;
         }
-        return {{"tokens", spans}, {"prompt_tokens", tokens.size()}, {"total_prompt_tokens", n}, {"context", 1024}, {"prompt", prompt}};
+        return {{"tokens", spans}, {"prompt_tokens", tokens.size()}, {"total_prompt_tokens", n}, {"context", 1024}, {"opening_tokens", opening_size}, {"prompt", prompt}};
     }
     if (req.at("op") == "step") {
         if (tokens.empty()) throw std::runtime_error("Start the story first.");
         bool shifted = false;
         if (tokens.size() >= 1024) {
             auto memory = llama_get_memory(ctx);
-            if (!llama_memory_can_shift(memory) || !llama_memory_seq_rm(memory, 0, 64, 320)) throw std::runtime_error("Could not advance the story attention window.");
-            llama_memory_seq_add(memory, 0, 320, -1, -256);
-            tokens.erase(tokens.begin()+64, tokens.begin()+320);
-            positions.erase(positions.begin()+64, positions.begin()+320);
+            if (!llama_memory_can_shift(memory) || !llama_memory_seq_rm(memory, 0, opening_size, opening_size+256)) throw std::runtime_error("Could not advance the story attention window.");
+            llama_memory_seq_add(memory, 0, opening_size+256, -1, -256);
+            tokens.erase(tokens.begin()+opening_size, tokens.begin()+opening_size+256);
+            positions.erase(positions.begin()+opening_size, positions.begin()+opening_size+256);
             decoded -= 256;
             shifted = true;
         }
@@ -144,19 +163,35 @@ static json handle(const json & req) {
         const int nv = llama_vocab_n_tokens(vocab);
         const float * raw_logits = llama_get_logits_ith(ctx, -1);
         std::vector<float> logits(raw_logits, raw_logits + nv);
-        // The canvas asks for an ongoing story; end-of-turn tokens otherwise end raw-prefix completion after a few words.
-        for (int i = 0; i < nv; ++i) if (llama_vocab_is_eog(vocab, i)) logits[i] = -INFINITY;
-        std::vector<int> order(nv); std::iota(order.begin(), order.end(), 0);
-        std::partial_sort(order.begin(), order.begin()+8, order.end(), [&](int a, int b) { return logits[a] > logits[b]; });
-        double sum = 0; for (int i = 0; i < nv; ++i) sum += std::exp(double(logits[i]-logits[order[0]]));
-        json top = json::array();
-        for (int k = 0; k < 8; ++k) {
-            const int id = order[k];
-            top.push_back({{"id", id}, {"text", piece(vocab, id)}, {"probability", std::exp(double(logits[id]-logits[order[0]]))/sum}});
+        for (int i = 0; i < nv; ++i) if (llama_vocab_is_eog(vocab, i) || llama_vocab_is_control(vocab, i)) logits[i] = -INFINITY;
+        std::unordered_map<int, int> counts;
+        for (auto it = recent_tokens.end()-std::min(size_t(128), recent_tokens.size()); it != recent_tokens.end(); ++it) ++counts[*it];
+        for (const auto & [id, count] : counts) logits[id] = (logits[id] > 0 ? logits[id]/1.12f : logits[id]*1.12f) - 0.1f*count - 0.15f;
+        if (recent_tokens.size() >= 4) {
+            const auto end = recent_tokens.end();
+            for (size_t i = 0; i+3 < recent_tokens.size(); ++i) {
+                if (std::equal(end-3, end, recent_tokens.begin()+i)) logits[recent_tokens[i+3]] = -INFINITY;
+            }
         }
+        std::vector<int> order(nv); std::iota(order.begin(), order.end(), 0);
+        const int k = std::min(40, nv);
+        std::partial_sort(order.begin(), order.begin()+k, order.end(), [&](int a, int b) { return logits[a] > logits[b]; });
+        std::vector<double> weights(k);
+        double sum = 0;
+        for (int i = 0; i < k; ++i) sum += weights[i] = std::exp(double(logits[order[i]]-logits[order[0]])/0.8);
+        if (!std::isfinite(sum) || sum <= 0) throw std::runtime_error("No usable story token. Scrub back to try another continuation.");
+        double nucleus = 0; int kept = 0;
+        while (kept < k && nucleus < sum*0.9) nucleus += weights[kept++];
+        const double draw = std::generate_canonical<double, 32>(random_state)*nucleus;
+        double cumulative = 0; int next = order[kept-1];
+        for (int i = 0; i < kept; ++i) { cumulative += weights[i]; if (draw < cumulative) { next = order[i]; break; } }
+        json top = json::array();
+        for (int i = 0; i < std::min(k, 8); ++i) top.push_back({{"id", order[i]}, {"text", piece(vocab, order[i])}, {"probability", i < kept ? weights[i]/nucleus : 0.0}});
         const int input_position = positions.back();
         const int output_position = next_position++;
-        const int next = order[0]; tokens.push_back(next);
+        tokens.push_back(next);
+        recent_tokens.push_back(next);
+        if (recent_tokens.size() > 512) recent_tokens.erase(recent_tokens.begin());
         json retained = shifted ? json(positions) : json(nullptr);
         positions.push_back(output_position);
         return {{"token", next}, {"text", piece(vocab, next)}, {"done", llama_vocab_is_eog(vocab, next)}, {"top", top}, {"position", input_position}, {"next_position", output_position}, {"retained_positions", retained}, {"bias", req.at("bias")}, {"attention", capture.mean}, {"attention_layer", llama_model_n_layer(model)-1}};

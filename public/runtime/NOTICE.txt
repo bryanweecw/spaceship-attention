@@ -1,7 +1,7 @@
 This browser runtime includes llama.cpp and ggml (MIT) and nlohmann/json (MIT).
 llama.cpp revision: c7518dbec59281c430ca5278ab4e60eadbc88b13
 Built with Emscripten 7.0.0 (MIT / University of Illinois-NCSA).
-The model weights are downloaded separately; SmolLM2 is Apache-2.0.
+The model weights are downloaded separately; Qwen2.5 and SmolLM2 are Apache-2.0.
 
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++

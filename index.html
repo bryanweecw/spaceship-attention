@@ -70,13 +70,19 @@
         margin: 0;
         padding-bottom: var(--tray-height);
       }
+      #canvas {
+        position: relative;
+        overflow-x: clip;
+        min-height: 200dvh;
+        touch-action: pan-y;
+      }
       #text {
         width: clamp(30ch, 100% - 2 * (var(--margin) + var(--rail-width)), 64ch);
         margin-inline: auto;
         padding-block: var(--padding);
         white-space: pre;
         line-height: var(--line);
-        touch-action: none;
+        touch-action: pan-y;
         text-underline-position: under;
 
         &::selection,
@@ -318,6 +324,12 @@
         [data-tone="live"] {
           fill: var(--hot);
         }
+      }
+      .knob,
+      .knob * {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
       }
       .knob {
         --size: var(--knob);
@@ -863,6 +875,11 @@
         display: block;
         margin: 0 0 1rem;
       }
+      #browser-model {
+        width: 100%;
+        min-height: 44px;
+        font: inherit;
+      }
       #browser-load {
         min-height: 44px;
         width: 100%;
@@ -889,17 +906,18 @@
           justify-content: start;
           overflow-x: auto;
         }
-        .knob::before {
-          content: "";
+        .knob > .touch-target {
           position: absolute;
-          inset: -15px;
+          inset: -16px;
           border-radius: 50%;
         }
         .knob {
           -webkit-touch-callout: none;
           user-select: none;
         }
-        #text {
+        #canvas,
+        #canvas * {
+          -webkit-user-select: none;
           -webkit-touch-callout: none;
           user-select: none;
         }
@@ -923,36 +941,54 @@
     </style>
   </head>
   <body>
-    <div id="rail" aria-hidden="true"></div>
-    <div id="text"></div>
-    <dialog id="browser-start" aria-labelledby="browser-start-title">
-      <h2 id="browser-start-title">Spaceship · browser story</h2>
-      <p>Runs the model on your device. First download: 259 MB, cached when browser storage allows.</p>
-      <p>
-        Drag the main knob to reveal the story. Double-tap it for attention locks. Touch a word to lock it; drag a lock to move it. Double-tap and hold the knob
-        for its fan.
-      </p>
-      <p>Landscape gives the original canvas more room. Keep this tab open while the model runs.</p>
-      <output id="browser-progress" aria-live="polite">SmolLM2 360M · local WASM inference · real attention steering</output>
-      <button id="browser-load" type="button">Load model &amp; start</button>
-      <p><a href="?sim=true">Try the simulator without a model</a></p>
-    </dialog>
-    <svg id="links" aria-hidden="true">
-      <path id="attention-links" />
-      <path id="attention-active-link" />
-      <g id="future-hud"></g>
-      <path id="future-links" />
-      <path id="future-tuned-link" />
-    </svg>
-    <button
-      id="pointer"
-      class="knob"
-      type="button"
-      aria-label="drag to scrub the text forward or back, double click to expand attention highlights or remove everything attached, double click and hold to open the fan menu"
-    ></button>
-    <template id="future-knob">
-      <button class="knob future" type="button" aria-label="future knob, …, double click to delete"><span>…</span></button>
-    </template>
+    <main id="canvas" aria-label="Scrollable story canvas">
+      <div id="rail" aria-hidden="true"></div>
+      <div id="text"></div>
+      <dialog id="browser-start" aria-labelledby="browser-start-title">
+        <h2 id="browser-start-title">Spaceship · browser story</h2>
+        <p>Runs entirely on your device.</p>
+        <label for="browser-model">Model</label>
+        <select id="browser-model" aria-describedby="browser-model-details">
+          <option value="qwen2.5-0.5b">Qwen2.5 0.5B · Q4_K_M · 469 MiB</option>
+          <option value="smollm2-360m">SmolLM2 360M · Q4_K_M · 259 MiB</option>
+        </select>
+        <p id="browser-model-details"></p>
+        <output id="browser-progress" aria-live="polite">Local WASM inference · real attention steering</output>
+        <button id="browser-load" type="button">Load model &amp; start</button>
+        <details>
+          <summary>Controls and scrolling</summary>
+          <p>
+            Drag the main knob to reveal the story. Double-tap it for attention locks. Touch a word to lock it; drag a lock to move it. Double-tap and hold the
+            knob for its fan.
+          </p>
+          <p>
+            Swipe the canvas to scroll. Hold the knob near the top or bottom edge to scroll while dragging. Landscape gives more room. Keep this tab open while
+            the model runs.
+          </p>
+        </details>
+        <p><a href="?sim=true">Try the simulator without a model</a></p>
+      </dialog>
+      <svg id="links" aria-hidden="true">
+        <path id="attention-links" />
+        <path id="attention-active-link" />
+        <g id="future-hud"></g>
+        <path id="future-links" />
+        <path id="future-tuned-link" />
+      </svg>
+      <button
+        id="pointer"
+        class="knob"
+        type="button"
+        aria-label="drag to scrub the text forward or back, double click to expand attention highlights or remove everything attached, double click and hold to open the fan menu"
+      >
+        <i class="touch-target" aria-hidden="true"></i>
+      </button>
+      <template id="future-knob">
+        <button class="knob future" type="button" aria-label="future knob, …, double click to delete">
+          <span>…</span><i class="touch-target" aria-hidden="true"></i>
+        </button>
+      </template>
+    </main>
     <div id="cursor" aria-hidden="true"></div>
     <footer id="tray">
       <button id="mode-toggle" type="button" aria-pressed="false" aria-label="flight mode">mode<b>sim</b></button>

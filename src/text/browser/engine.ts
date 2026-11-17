@@ -1,5 +1,17 @@
-export function createBrowserEngine(dialog: HTMLDialogElement, loadButton: HTMLButtonElement, progress: HTMLOutputElement) {
+import { BROWSER_MODELS, DEFAULT_MODEL } from "./models.ts"
+
+export function createBrowserEngine(
+  dialog: HTMLDialogElement,
+  loadButton: HTMLButtonElement,
+  progress: HTMLOutputElement,
+  modelSelect: HTMLSelectElement,
+  modelDetails: HTMLElement,
+) {
   const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" })
+  const selected = localStorage.getItem("spaceship:model") ?? DEFAULT_MODEL
+  modelSelect.value = BROWSER_MODELS.some(({ id }) => id === selected) ? selected : DEFAULT_MODEL
+  modelSelect.addEventListener("change", describeModel)
+  describeModel()
   let id = 0
   let failed = false
   let runtimeFailure: Error | undefined
@@ -12,7 +24,7 @@ export function createBrowserEngine(dialog: HTMLDialogElement, loadButton: HTMLB
   worker.onmessage = ({ data }) => {
     if (data.progress) {
       const { phase, received, total } = data.progress
-      progress.value = `${phase}: ${Math.min(100, Math.round((received / total) * 100))}% (${Math.round(received / 1048576)} / ${Math.round(total / 1048576)} MB)`
+      progress.value = `${phase}: ${Math.min(100, Math.round((received / total) * 100))}% (${Math.round(received / 1048576)} / ${Math.round(total / 1048576)} MiB)`
       return
     }
     const request = pending.get(data.id)
@@ -30,8 +42,10 @@ export function createBrowserEngine(dialog: HTMLDialogElement, loadButton: HTMLB
   loadButton.addEventListener("click", () => {
     if (failed) return location.reload()
     loadButton.disabled = true
+    modelSelect.disabled = true
+    localStorage.setItem("spaceship:model", modelSelect.value)
     progress.value = "Starting WebAssembly runtime..."
-    loading = send("load")
+    loading = send("load", { model: modelSelect.value })
     release()
     loading.then(
       () => dialog.close(),
@@ -51,6 +65,11 @@ export function createBrowserEngine(dialog: HTMLDialogElement, loadButton: HTMLB
       await loading
       return send(path.endsWith("init") ? "init" : "step", body) as Promise<T>
     },
+  }
+
+  function describeModel() {
+    const model = BROWSER_MODELS.find(({ id }) => id === modelSelect.value)!
+    modelDetails.textContent = `${Math.ceil(model.bytes / 1048576)} MiB download; cached when storage allows. ${model.id === DEFAULT_MODEL ? "Uses more memory and may run slower." : "Smaller download and memory use."}`
   }
 
   function send(op: string, body?: unknown): Promise<unknown> {

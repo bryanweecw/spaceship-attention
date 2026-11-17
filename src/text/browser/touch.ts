@@ -12,13 +12,42 @@ type TouchOptions = {
 }
 
 export function bindTouchControls({ knob, text, doubleTap, select, remove, overBox }: TouchOptions) {
+  let touchInput = false
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      touchInput = event.pointerType === "touch"
+    },
+    { capture: true },
+  )
+  document.addEventListener(
+    "touchstart",
+    (event) => {
+      const touch = event.touches[0]
+      if (
+        event.target instanceof Element &&
+        (event.target.closest(".knob") || (touch && text.contains(event.target) && overBox({ x: touch.pageX, y: touch.pageY })))
+      ) {
+        event.preventDefault()
+        getSelection()?.removeAllRanges()
+      }
+    },
+    { passive: false, capture: true },
+  )
+  document.addEventListener("contextmenu", (event) => {
+    if (touchInput && event.target instanceof Element && event.target.closest("#canvas, .knob")) event.preventDefault()
+  })
+  document.addEventListener("selectionchange", () => {
+    const selection = getSelection()
+    if (touchInput && selection?.anchorNode && (text.contains(selection.anchorNode) || knob.contains(selection.anchorNode))) selection.removeAllRanges()
+  })
   let lastKnob = 0
   let lastBox = 0
   let press: { id: number; x: number; y: number; moved: boolean; box: boolean; knob: boolean } | undefined
   for (const element of [knob, text]) {
     element.addEventListener("pointerdown", (event) => {
       if (event.pointerType !== "touch") return
-      event.preventDefault()
+      if (element === knob || overBox({ x: event.pageX, y: event.pageY })) event.preventDefault()
       const point = { x: event.pageX, y: event.pageY }
       press = { id: event.pointerId, ...point, moved: false, box: overBox(point), knob: element === knob }
     })
@@ -29,6 +58,7 @@ export function bindTouchControls({ knob, text, doubleTap, select, remove, overB
       const held = press
       press = undefined
       if (!held || held.id !== event.pointerId || held.moved) return
+      event.preventDefault()
       if (held.knob) {
         if (event.timeStamp - lastKnob < 400) {
           lastKnob = 0

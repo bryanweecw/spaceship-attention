@@ -46,7 +46,8 @@ export function onPressAndHold(
     press.latest = event
     const { start, isSweeping } = press
     const { center, radius } = isSweeping ? circleOf(element) : { center: { x: start.pageX, y: start.pageY }, radius: STILL_TOLERANCE_PX }
-    if (distance({ x: event.pageX, y: event.pageY }, center) > (event.pointerType === "touch" ? Math.max(16, radius) : radius)) release()
+    const touchCenter = event.pointerType === "touch" ? { x: start.pageX, y: start.pageY } : center
+    if (distance({ x: event.pageX, y: event.pageY }, touchCenter) > (event.pointerType === "touch" ? 24 : radius)) release()
   })
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) element.addEventListener(type, release)
 

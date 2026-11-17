@@ -13,7 +13,7 @@ try {
     await context.route("**/runtime/manifest.json", async (route) => {
       const response = await route.fetch()
       const manifest = await response.json()
-      manifest.model.url = process.env.MODEL_URL
+      manifest.models.find((model) => model.id === (process.env.MODEL_ID ?? "qwen2.5-0.5b")).url = process.env.MODEL_URL
       await route.fulfill({ json: manifest })
     })
   const page = await context.newPage()
@@ -32,6 +32,7 @@ try {
     if (m.type() === "error" || m.type() === "warning") console.log("console", m.text().slice(0, 300))
   })
   await page.goto(base)
+  if (process.env.MODEL_ID) await page.locator("#browser-model").selectOption(process.env.MODEL_ID)
   await page.locator("#browser-load").click()
   let latest = ""
   const timer = setInterval(async () => {
@@ -102,7 +103,7 @@ try {
   const diagnostic = await context.newPage()
   await diagnostic.goto(base + "/?sim=true")
   const mechanism = await diagnostic.evaluate(
-    async ({ url }) => {
+    async ({ url, modelId }) => {
       const worker = new Worker(url, { type: "module" }),
         pending = new Map()
       let id = 0
@@ -120,11 +121,11 @@ try {
           pending.set(key, { resolve, reject })
           worker.postMessage({ id: key, op, body })
         })
-      const loaded = await call("load")
+      const loaded = await call("load", { model: modelId })
       const prompt =
         "The spaceship carried two things: a greenhouse full of roses and a damaged engine. Mira loved the garden, but the mechanic worried about the reactor. When she opened the hatch, she found"
       let session = await call("init", { prompt })
-      const position = session.tokens.find((t) => t.text.includes("roses")).position
+      const position = session.tokens.find((t) => t.start < prompt.indexOf("roses") + 5 && t.end > prompt.indexOf("roses")).position
       const neutral = await call("step", { session: session.session, bias: [] })
       session = await call("init", { prompt })
       const zero = await call("step", { session: session.session, bias: [{ position, value: 0 }] })
@@ -134,7 +135,7 @@ try {
       worker.terminate()
       return { loaded, position, neutral, zero, steered, generated }
     },
-    { url: base + "/assets/" + workerFile },
+    { url: base + "/assets/" + workerFile, modelId: process.env.MODEL_ID ?? "qwen2.5-0.5b" },
   )
   assert.equal(mechanism.loaded.cached, true)
   assert.equal(mechanism.generated.bias[0].position, mechanism.steered.next_position)
@@ -144,10 +145,11 @@ try {
   assert.ok(Math.abs(mechanism.neutral.attention.reduce((a, b) => a + b, 0) - 1) < 0.0001)
   assert.ok(mechanism.steered.attention[mechanism.position] > mechanism.neutral.attention[mechanism.position])
   await writeFile(
-    `evidence/browser-story-${engine}-check.json`,
+    `evidence/browser-story-${engine}-${process.env.MODEL_ID ?? "qwen2.5-0.5b"}-check.json`,
     JSON.stringify(
       {
         host: base,
+        model_id: process.env.MODEL_ID ?? "qwen2.5-0.5b",
         model_url_override: process.env.MODEL_URL ?? null,
         backend: "real WASM SIMD in worker",
         inference_api_requests: api,

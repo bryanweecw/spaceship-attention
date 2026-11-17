@@ -33,6 +33,7 @@ import { simulatedRealization } from "./simulated-realization.ts"
 import { simulatedRelevance } from "./simulated-relevance.ts"
 import { isSoundOn, setSoundOn, startSound, type Sound } from "./sound/engine.ts"
 import { sounds } from "./sound/sounds.ts"
+import { createScrollableCanvas } from "./scroll-canvas.ts"
 import { showStatus } from "./status-line.ts"
 import { storyLayoutOf, type StoryLayout } from "./story-layout.ts"
 import { domPointAt, textOffsetOf } from "./text-offsets.ts"
@@ -62,6 +63,7 @@ const soundToggle = $<HTMLButtonElement>("#sound-toggle")
 const modeToggle = $<HTMLButtonElement>("#mode-toggle")
 const extraLink = $<HTMLAnchorElement>("#extra-link")
 const railElement = $("#rail")
+const trayElement = $("#tray")
 const style = getComputedStyle(element)
 await document.fonts.load(style.font)
 /** Measures where the first hidden word on the caret's line starts, in the text's font. */
@@ -73,7 +75,13 @@ const isLive = params.get("live") === "true"
 const isLocal = !isLive && params.get("sim") !== "true"
 const browser =
   isLocal && params.get("engine") !== "native"
-    ? createBrowserEngine($<HTMLDialogElement>("#browser-start"), $<HTMLButtonElement>("#browser-load"), $<HTMLOutputElement>("#browser-progress"))
+    ? createBrowserEngine(
+        $<HTMLDialogElement>("#browser-start"),
+        $<HTMLButtonElement>("#browser-load"),
+        $<HTMLOutputElement>("#browser-progress"),
+        $<HTMLSelectElement>("#browser-model"),
+        $("#browser-model-details"),
+      )
     : undefined
 const local = isLocal ? createLocalSource(refreshRail, browser?.request, Boolean(browser)) : undefined
 const stream = createTextStream(local?.source ?? (isLive ? liveSource : simulatedSource), render)
@@ -130,6 +138,8 @@ let didHold = false
 /** The previous drag point, for how fast the knob moves. */
 let lastDrag: { point: Point; at: number } | undefined
 
+const canvas = createScrollableCanvas($("#canvas"), handle, scrubTo)
+
 bindModeToggle(modeToggle, $<HTMLDialogElement>("#live-keys"), isLive, isLocal)
 if (isLocal) {
   railElement.title = "Measured final-layer attention, averaged over heads; overlapping tokens counted in each span. Not causal influence."
@@ -173,13 +183,7 @@ onPressAndHold(
 )
 // Dragging scrubs at once, forward or back.
 makeDraggable(handle, {
-  onDrag: (point) => {
-    handle.toggleAttribute("data-dragging", true)
-    const before = shownCount
-    moveTo(point)
-    discardIfBehindRest()
-    soundWordsCrossed(before, point)
-  },
+  onDrag: scrubTo,
   onDrop: () => {
     if (handle.hasAttribute("data-dragging")) sounds.knobRelease(circleOf(handle).center.x)
     handle.removeAttribute("data-dragging")
@@ -203,6 +207,16 @@ moveTo(pointAt(caret, metricsOf()))
 setInterval(() => {
   if (stream.activity().isGenerating) report()
 }, 250)
+
+function scrubTo(point: Point) {
+  handle.toggleAttribute("data-dragging", true)
+  const before = shownCount
+  const bottom = scrollY + innerHeight - trayElement.getBoundingClientRect().height - handle.offsetWidth / 2 - 8
+  const visible = { x: point.x, y: Math.max(scrollY + 8, Math.min(point.y, bottom)) }
+  moveTo(visible)
+  discardIfBehindRest()
+  soundWordsCrossed(before, visible)
+}
 
 /** The knob stops at the column's right edge, as no line reaches past it. */
 function moveTo({ x, y }: Point) {
@@ -260,6 +274,7 @@ function render() {
   shownCount = count
   if (!isRegenerationHeld && !handle.hasAttribute("data-dragging")) restCount = count
   scheduleTopUp()
+  canvas.update(caret, lines.length, parseFloat(style.lineHeight), parseFloat(style.paddingTop))
   story = storyLayoutOf(lines, stream.text)
   if (element.textContent !== story.content) element.textContent = story.content
   connections.update(story)

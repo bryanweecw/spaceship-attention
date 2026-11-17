@@ -1,6 +1,6 @@
 export type Bias = { position: number; value: number }
 export type PromptToken = { position: number; id: number; text: string; start: number; end: number }
-export type PromptSession = { session: string; prompt: string; prompt_tokens: number; tokens: PromptToken[] }
+export type PromptSession = { session: string; prompt: string; prompt_tokens: number; context?: number; tokens: PromptToken[] }
 export type Decode = {
   attention?: number[]
   attention_layer?: number
@@ -8,6 +8,8 @@ export type Decode = {
   text: string
   done: boolean
   position: number
+  next_position?: number
+  retained_positions?: number[] | null
   bias: Bias[]
   top: { id: number; text: string; probability: number }[]
 }

@@ -13,12 +13,11 @@ const OPENING =
 type Snapshot = { context: string; tokens: PromptToken[]; attention: number[]; layer: number }
 
 /** Owns inference ordering and measured attention for the original canvas, including its buffered future. */
-export function createLocalSource(onMeasurement: () => void, infer: typeof request = request, mobile = false) {
+export function createLocalSource(onMeasurement: () => void, infer: typeof request = request, browserRuntime = false) {
   let pending = Promise.resolve()
   let snapshots: Snapshot[] = []
   let failure: string | undefined
-  let continuation:
-    { prompt: string; context: string; steering: string; session: PromptSession; tokens: PromptToken[]; bias: ReturnType<typeof attentionBias> } | undefined
+  let continuation: { prompt: string; context: string; steering: string; session: PromptSession; tokens: PromptToken[] } | undefined
   const source: TextSource = {
     expand: (text) => text || OPENING,
     async *complete(prefix, steering, signal) {
@@ -31,35 +30,48 @@ export function createLocalSource(onMeasurement: () => void, infer: typeof reque
       try {
         signal.throwIfAborted()
         const prompt = normalize(prefix)
-        const signature = JSON.stringify(steering)
-        const cached = steering.controls.length === 0 && continuation?.prompt === prompt && continuation.steering === signature ? continuation : undefined
+        const signature = JSON.stringify({ leads: steering.leads.map(({ keyword, keywordSpan }) => ({ keyword, keywordSpan })), controls: steering.controls })
+        const cached =
+          (browserRuntime || steering.controls.length === 0) && continuation?.prompt === prompt && continuation.steering === signature
+            ? continuation
+            : undefined
         continuation = undefined
         failure = undefined
         const session = cached?.session ?? (await infer<PromptSession>("/api/init", { prompt }))
         signal.throwIfAborted()
         snapshots = snapshots.filter(({ context }) => prompt.startsWith(normalize(context)) && normalize(context).length < prompt.length)
-        const bias = cached?.bias ?? attentionBias(prompt, session.tokens, steering.leads, steering.controls)
-        const tokens = [...(cached?.tokens ?? session.tokens)]
+        const bias = attentionBias(prompt, cached?.tokens ?? session.tokens, steering.leads, steering.controls, cached?.context ?? prompt)
+        let tokens = [...(cached?.tokens ?? session.tokens)]
         let context = cached?.context ?? prompt
         let emitted = prompt
         failure = undefined
-        for (let i = 0; i < (mobile ? 48 : 256) && !signal.aborted; i++) {
+        for (let i = 0; i < (browserRuntime ? 48 : 256) && !signal.aborted; i++) {
           const result = await infer<Decode>("/api/step", { session: session.session, bias })
           if (signal.aborted) return
+          if (result.retained_positions) {
+            const retained = new Set(result.retained_positions)
+            tokens = tokens.filter(({ position }) => retained.has(position))
+          }
           if (result.attention?.length) {
             snapshots.push({ context, tokens: [...tokens], attention: result.attention, layer: result.attention_layer! })
-            if (snapshots.length > (mobile ? 256 : 2048)) snapshots.shift()
+            if (snapshots.length > (browserRuntime ? 256 : 2048)) snapshots.shift()
             onMeasurement()
           }
           if (result.done) return
           const start = new TextEncoder().encode(context).length
-          tokens.push({ position: tokens.length, id: result.token, text: result.text, start, end: start + new TextEncoder().encode(result.text).length })
+          tokens.push({
+            position: result.next_position ?? tokens.length,
+            id: result.token,
+            text: result.text,
+            start,
+            end: start + new TextEncoder().encode(result.text).length,
+          })
           context += result.text
           const next = normalize(context)
           if (next.length > emitted.length) yield next.slice(emitted.length)
           emitted = next
         }
-        if (!signal.aborted) continuation = { prompt: emitted, context, steering: signature, session, tokens, bias }
+        if (!signal.aborted) continuation = { prompt: emitted, context, steering: signature, session, tokens }
       } catch (error) {
         if (!signal.aborted) {
           failure = error instanceof Error ? error.message : String(error)

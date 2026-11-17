@@ -8,7 +8,7 @@
   "touch_lock": true,
   "touch_scrub": false,
   "portrait_overflow": false,
-  "visible_text": "The spaceship carried two things: a \ngreenhouse full of roses and a \ndamaged engine. Mira loved the \ngarden, but the mechanic worried \nabout the reactor. When she opened \nthe hatch, she found a small, glowing \norb. What could it be?",
+  "visible_text": "The spaceship carried two things: a \ngreenhouse full of roses and a \ndamaged engine. Mira loved the \ngarden, but the mechanic worried \nabout the reactor. When she opened \nthe hatch, she found a small, glowing \norb.",
   "mechanism": {
     "loaded": {
       "ready": true,
@@ -66,6 +66,8 @@
         }
       ],
       "position": 36,
+      "next_position": 37,
+      "retained_positions": null,
       "bias": [],
       "attention": [
         0.4400646984577179, 0.012172008864581585, 0.011648106388747692, 0.008210252039134502, 0.005822629202157259, 0.018347589299082756, 0.004817415960133076,
@@ -124,6 +126,8 @@
         }
       ],
       "position": 36,
+      "next_position": 37,
+      "retained_positions": null,
       "bias": [
         {
           "position": 10,
@@ -187,6 +191,8 @@
         }
       ],
       "position": 36,
+      "next_position": 37,
+      "retained_positions": null,
       "bias": [
         {
           "position": 10,
@@ -200,6 +206,71 @@
         0.004300078377127647, 0.007311214692890644, 0.016160998493433, 0.009676949121057987, 0.0028821341693401337, 0.005005853716284037, 0.00855829007923603,
         0.005376976914703846, 0.004361853003501892, 0.051661428064107895, 0.01955822855234146, 0.005109878256917, 0.008493919856846333, 0.005406893789768219,
         0.010579422116279602, 0.04630085080862045, 0.011380361393094063, 0.10947512090206146
+      ],
+      "attention_layer": 31
+    },
+    "generated": {
+      "token": 1165,
+      "text": " small",
+      "done": false,
+      "top": [
+        {
+          "id": 1165,
+          "text": " small",
+          "probability": 0.091184462840665
+        },
+        {
+          "id": 4109,
+          "text": " note",
+          "probability": 0.09088459618281293
+        },
+        {
+          "id": 3714,
+          "text": " message",
+          "probability": 0.040773681079963285
+        },
+        {
+          "id": 8463,
+          "text": " strange",
+          "probability": 0.03285061417880723
+        },
+        {
+          "id": 5383,
+          "text": " tiny",
+          "probability": 0.022945106819708058
+        },
+        {
+          "id": 3800,
+          "text": " piece",
+          "probability": 0.019148440872087332
+        },
+        {
+          "id": 11965,
+          "text": " mysterious",
+          "probability": 0.01909653946140729
+        },
+        {
+          "id": 725,
+          "text": " new",
+          "probability": 0.0175101374535969
+        }
+      ],
+      "position": 37,
+      "next_position": 38,
+      "retained_positions": null,
+      "bias": [
+        {
+          "position": 37,
+          "value": 2
+        }
+      ],
+      "attention": [
+        0.4216483533382416, 0.012455618008971214, 0.0036297740880399942, 0.0068526724353432655, 0.0038804677315056324, 0.004470563493669033, 0.0053251045756042,
+        0.014615584164857864, 0.003008713014423847, 0.002543852897360921, 0.011432567611336708, 0.006190961226820946, 0.009218963794410229,
+        0.003968620672821999, 0.0028854203410446644, 0.008461755700409412, 0.0015672629233449697, 0.003467886708676815, 0.0046701980754733086,
+        0.005227244924753904, 0.004111037589609623, 0.002900943858548999, 0.004497114103287458, 0.001931144972331822, 0.001835527247749269,
+        0.001861580996774137, 0.0035913577303290367, 0.0045127784833312035, 0.009079487062990665, 0.002536614192649722, 0.002792042912915349,
+        0.004427069332450628, 0.004599846433848143, 0.005579053889960051, 0.006026710849255323, 0.00422735745087266, 0.019387025386095047, 0.3805817663669586
       ],
       "attention_layer": 31
     }

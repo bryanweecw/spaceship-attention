@@ -7,6 +7,7 @@ import { caretAt, isAhead, pointAt, type Caret, type TextMetrics } from "./caret
 import { simulatedSource } from "./completion.ts"
 import { createConnections } from "./connections.ts"
 import { makeDraggable } from "./drag.ts"
+import { generationDemand } from "./generation-demand.ts"
 import { createFutureKnobs } from "./future-knobs.ts"
 import { onPressAndHold } from "./hold.ts"
 import { createKeywordRelevance } from "./keyword-relevance.ts"
@@ -133,7 +134,7 @@ bindModeToggle(modeToggle, $<HTMLDialogElement>("#live-keys"), isLive, isLocal)
 if (isLocal) {
   railElement.title = "Measured final-layer attention, averaged over heads; overlapping tokens counted in each span. Not causal influence."
   statusElement.title =
-    "Local llama.cpp; boxes add +2 attention bias. Fan angle suppresses/amplifies its named word; distance sets strength. Pinning is unavailable in local mode."
+    "Local llama.cpp; boxes add +2 attention bias. Fan angle suppresses/amplifies its named word; distance sets strength. Long stories retain the opening and recent text; older middle locks can leave the attention window. Pinning is unavailable in local mode."
 }
 bindTouchControls({
   knob: handle,
@@ -279,11 +280,12 @@ function invalidateFuture() {
 /** Shows whether the model is generating and how full the buffer past the knob is, on the knob and in the status line, with what the text holds and is steered by. */
 function report() {
   const activity = stream.activity()
-  const buffer = Math.max(0, countWords(stream.text) - (shownCount ?? 0))
+  const { buffer, cursorLines } = generationDemand(prepareWords(), caret, element.getBoundingClientRect().width, stream.text, shownCount ?? 0, BUFFER_WORDS)
   handle.toggleAttribute("data-generating", activity.isGenerating)
   handle.style.setProperty("--buffer", `${Math.min(1, buffer / BUFFER_WORDS)}`)
   showStatus(statusElement, {
     ...activity,
+    cursorLines,
     words: shownCount ?? 0,
     buffer,
     boxes: attention.leads().length,
@@ -341,7 +343,7 @@ function scheduleTopUp() {
 function topUp() {
   if (isRegenerationHeld || local?.failure() || stream.activity().isGenerating || performance.now() < retryAt) return
   const words = countWords(stream.text)
-  if (words - (shownCount ?? 0) >= BUFFER_WORDS) return
+  if (!generationDemand(prepareWords(), caret, element.getBoundingClientRect().width, stream.text, shownCount ?? 0, BUFFER_WORDS).needsGeneration) return
   stream.generate("buffer low", steering()).then(
     (outcome) => outcome === "done" && settleTopUp(words),
     (error) => (console.error(error), settleTopUp(words)),

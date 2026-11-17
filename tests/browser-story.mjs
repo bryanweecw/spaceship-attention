@@ -130,12 +130,15 @@ try {
       const zero = await call("step", { session: session.session, bias: [{ position, value: 0 }] })
       session = await call("init", { prompt })
       const steered = await call("step", { session: session.session, bias: [{ position, value: 2 }] })
+      const generated = await call("step", { session: session.session, bias: [{ position: steered.next_position, value: 2 }] })
       worker.terminate()
-      return { loaded, position, neutral, zero, steered }
+      return { loaded, position, neutral, zero, steered, generated }
     },
     { url: base + "/assets/" + workerFile },
   )
   assert.equal(mechanism.loaded.cached, true)
+  assert.equal(mechanism.generated.bias[0].position, mechanism.steered.next_position)
+  assert.ok(Math.abs(mechanism.generated.attention.reduce((a, b) => a + b, 0) - 1) < 0.0001)
   assert.deepEqual(mechanism.neutral.top, mechanism.zero.top)
   assert.notDeepEqual(mechanism.neutral.top, mechanism.steered.top)
   assert.ok(Math.abs(mechanism.neutral.attention.reduce((a, b) => a + b, 0) - 1) < 0.0001)

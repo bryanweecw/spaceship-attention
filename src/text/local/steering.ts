@@ -5,11 +5,10 @@ import { wordSpans, type Span } from "../segments.ts"
 
 const encoder = new TextEncoder()
 
-export function attentionBias(prefix: string, tokens: PromptToken[], leads: Lead[], controls: Control[]): Bias[] {
+export function attentionBias(prefix: string, tokens: PromptToken[], leads: Lead[], controls: Control[], rawContext = prefix): Bias[] {
   const values = new Map<number, number>()
   const add = (span: Span, value: number) => {
-    const start = encoder.encode(prefix.slice(0, span.start)).length
-    const end = encoder.encode(prefix.slice(0, span.end)).length
+    const { start, end } = byteSpan(rawContext, span)
     for (const token of tokens) {
       if (token.start < end && token.end > start) values.set(token.position, (values.get(token.position) ?? 0) + value)
     }

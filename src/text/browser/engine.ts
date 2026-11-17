@@ -2,6 +2,7 @@ export function createBrowserEngine(dialog: HTMLDialogElement, loadButton: HTMLB
   const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" })
   let id = 0
   let failed = false
+  let runtimeFailure: Error | undefined
   let release!: () => void
   const started = new Promise<void>((resolve) => {
     release = resolve
@@ -22,6 +23,7 @@ export function createBrowserEngine(dialog: HTMLDialogElement, loadButton: HTMLB
   }
   worker.onerror = (event) => {
     const error = new Error(event.message || "The browser runtime stopped. Reload to try again.")
+    runtimeFailure = error
     for (const request of pending.values()) request.reject(error)
     pending.clear()
   }
@@ -52,9 +54,31 @@ export function createBrowserEngine(dialog: HTMLDialogElement, loadButton: HTMLB
   }
 
   function send(op: string, body?: unknown): Promise<unknown> {
+    if (runtimeFailure) return Promise.reject(runtimeFailure)
     return new Promise((resolve, reject) => {
       const key = ++id
-      pending.set(key, { resolve, reject })
+      const timeout =
+        op === "load"
+          ? undefined
+          : setTimeout(
+              () => {
+                runtimeFailure = new Error("Browser inference stopped responding. Reload to restart the model.")
+                worker.terminate()
+                for (const request of pending.values()) request.reject(runtimeFailure)
+                pending.clear()
+              },
+              op === "init" ? 120000 : 30000,
+            )
+      pending.set(key, {
+        resolve(value) {
+          clearTimeout(timeout)
+          resolve(value)
+        },
+        reject(error) {
+          clearTimeout(timeout)
+          reject(error)
+        },
+      })
       worker.postMessage({ id: key, op, body })
     })
   }

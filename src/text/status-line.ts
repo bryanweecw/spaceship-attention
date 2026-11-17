@@ -7,10 +7,15 @@ export type Status = StreamActivity & { words: number; buffer: number; boxes: nu
  * Writes `status` into `element` as three zones: what the model is doing, what the text holds, and what steers it.
  * Whether the model is streaming is marked on `element`, for the readings to show it. Model and text fields are labelled by a glyph that spells out its name on hover; a field not measured yet reads as a dash.
  */
-export function showStatus(element: HTMLElement, { isGenerating, firstChunkMs, wordsPerSecond, words, buffer, boxes, steering, pinned }: Status) {
+export function showStatus(element: HTMLElement, { isGenerating, waitingMs, firstChunkMs, wordsPerSecond, words, buffer, boxes, steering, pinned }: Status) {
   element.toggleAttribute("data-streaming", isGenerating)
   element.replaceChildren(
     zone(
+      field(
+        "activity",
+        "",
+        waitingMs !== undefined ? `preparing ${(waitingMs / 1000).toFixed(1)}s` : isGenerating ? "generating" : buffer > 0 ? "ready" : "idle",
+      ),
       field("rate", glyph("»", "rate"), wordsPerSecond === undefined ? undefined : `${Math.round(wordsPerSecond)}`, "w/s"),
       field("latency", glyph("▼", "latency to first chunk"), firstChunkMs === undefined ? undefined : `${Math.round(firstChunkMs)}`, "ms"),
     ),

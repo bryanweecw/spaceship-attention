@@ -199,6 +199,9 @@ createPointer({
 
 addEventListener("resize", () => moveTo(pointAt(caret, metricsOf())))
 moveTo(pointAt(caret, metricsOf()))
+setInterval(() => {
+  if (stream.activity().isGenerating) report()
+}, 250)
 
 /** The knob stops at the column's right edge, as no line reaches past it. */
 function moveTo({ x, y }: Point) {
@@ -225,6 +228,7 @@ function discardIfBehindRest() {
   const count = shownCount ?? 0
   if (count >= restCount) return
   stream.truncate(count)
+  local?.clearFailure()
   retryAt = 0
   retryMs = RETRY_MS
   restCount = count
@@ -253,6 +257,7 @@ function render() {
 
   if (count !== shownCount) restartDwell()
   shownCount = count
+  if (!isRegenerationHeld && !handle.hasAttribute("data-dragging")) restCount = count
   scheduleTopUp()
   story = storyLayoutOf(lines, stream.text)
   if (element.textContent !== story.content) element.textContent = story.content
@@ -285,7 +290,7 @@ function report() {
     steering: futureKnobs.controls().length,
     pinned: futureKnobs.pinnedCount(),
   })
-  if (local?.failure()) statusElement.textContent = `${local.failure()}. ${browser ? "Reload to retry." : "Start native/server.py and reload."}`
+  if (local?.failure()) statusElement.textContent = `${local.failure()}. ${browser ? "Scrub back or reload to retry." : "Start native/server.py and reload."}`
 }
 
 function restartDwell() {
@@ -315,7 +320,7 @@ function afterStreaming(request: () => void) {
 function regenerateFuture() {
   isFutureStale = false
   restCount = shownCount ?? 0
-  stream.regenerate(shownCount ?? 0, "steering changed", steering())
+  void stream.regenerate(shownCount ?? 0, "steering changed", steering()).catch((error) => console.error(error))
 }
 
 function steering(): Steering {
@@ -334,7 +339,7 @@ function scheduleTopUp() {
 }
 
 function topUp() {
-  if (isRegenerationHeld || stream.activity().isGenerating || performance.now() < retryAt) return
+  if (isRegenerationHeld || local?.failure() || stream.activity().isGenerating || performance.now() < retryAt) return
   const words = countWords(stream.text)
   if (words - (shownCount ?? 0) >= BUFFER_WORDS) return
   stream.generate("buffer low", steering()).then(

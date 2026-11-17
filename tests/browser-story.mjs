@@ -9,6 +9,13 @@ const browser = await (engine === "webkit"
   : chromium.launch({ executablePath: process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true }))
 try {
   const context = await browser.newContext({ viewport: { width: 852, height: 393 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 })
+  if (process.env.MODEL_URL)
+    await context.route("**/runtime/manifest.json", async (route) => {
+      const response = await route.fetch()
+      const manifest = await response.json()
+      manifest.model.url = process.env.MODEL_URL
+      await route.fulfill({ json: manifest })
+    })
   const page = await context.newPage()
   const errors = [],
     api = [],
@@ -138,6 +145,7 @@ try {
     JSON.stringify(
       {
         host: base,
+        model_url_override: process.env.MODEL_URL ?? null,
         backend: "real WASM SIMD in worker",
         inference_api_requests: api,
         browser_errors: errors,

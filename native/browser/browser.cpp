@@ -116,8 +116,11 @@ static json handle(const json & req) {
         if (!llama_set_attention_bias(ctx, bias.data(), bias.size())) throw std::runtime_error("Bias rejected.");
         capture.mean.clear(); decode(decoded, 1); ++decoded;
         capture.mean.resize(std::min(capture.mean.size(), decoded));
-        const float * logits = llama_get_logits_ith(ctx, -1);
         const int nv = llama_vocab_n_tokens(vocab);
+        const float * raw_logits = llama_get_logits_ith(ctx, -1);
+        std::vector<float> logits(raw_logits, raw_logits + nv);
+        // The canvas asks for an ongoing story; end-of-turn tokens otherwise end raw-prefix completion after a few words.
+        for (int i = 0; i < nv; ++i) if (llama_vocab_is_eog(vocab, i)) logits[i] = -INFINITY;
         std::vector<int> order(nv); std::iota(order.begin(), order.end(), 0);
         std::partial_sort(order.begin(), order.begin()+8, order.end(), [&](int a, int b) { return logits[a] > logits[b]; });
         double sum = 0; for (int i = 0; i < nv; ++i) sum += std::exp(double(logits[i]-logits[order[0]]));

@@ -21,7 +21,7 @@ export type TextSource = {
 }
 
 /** How the latest generation went: whether it is still running, how long its first chunk took, and how fast words arrived after that. */
-export type StreamActivity = { isGenerating: boolean; firstChunkMs?: number; wordsPerSecond?: number }
+export type StreamActivity = { isGenerating: boolean; waitingMs?: number; firstChunkMs?: number; wordsPerSecond?: number }
 
 /** Times of the latest generation; `words` counts those after the first chunk, so the rate measures streaming, not latency. */
 type Timing = { startedAt: number; firstChunkAt?: number; lastChunkAt?: number; words: number }
@@ -68,6 +68,7 @@ export function createTextStream({ expand, complete }: TextSource, onChange: () 
     const streamingMs = firstChunkAt === undefined || lastChunkAt === undefined ? 0 : lastChunkAt - firstChunkAt
     return {
       isGenerating: active !== undefined,
+      waitingMs: active && firstChunkAt === undefined ? performance.now() - startedAt : undefined,
       firstChunkMs: firstChunkAt === undefined ? undefined : firstChunkAt - startedAt,
       wordsPerSecond: streamingMs > 0 ? (words * 1000) / streamingMs : undefined,
     }
@@ -89,6 +90,7 @@ export function createTextStream({ expand, complete }: TextSource, onChange: () 
     const prefix = text
     const started: Timing = { startedAt: performance.now(), words: 0 }
     timing = started
+    onChange()
     console.log(`generation ${generationId} start by ${trigger} after ${countWords(prefix)} words`)
 
     try {

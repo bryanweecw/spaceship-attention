@@ -577,6 +577,9 @@
         }
 
         /* Every reading has a fixed width that fits its widest value, so the centered tray never shifts as digits come and go. */
+        [data-field="activity"] b {
+          width: 16ch;
+        }
         [data-field="rate"] b,
         [data-field="latency"] b {
           width: 7ch;

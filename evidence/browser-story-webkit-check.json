@@ -1,5 +1,6 @@
 {
-  "host": "https://spaceship-iphone-story.vercel.app",
+  "host": "http://127.0.0.1:8090",
+  "model_url_override": "http://127.0.0.1:8090/test-model.gguf",
   "backend": "real WASM SIMD in worker",
   "inference_api_requests": [],
   "browser_errors": [],
@@ -26,42 +27,42 @@
         {
           "id": 253,
           "text": " a",
-          "probability": 0.2524548359162124
+          "probability": 0.2524549935052934
         },
         {
           "id": 260,
           "text": " the",
-          "probability": 0.16230125094086398
+          "probability": 0.16230135225365877
         },
         {
           "id": 338,
           "text": " that",
-          "probability": 0.13304932160688976
+          "probability": 0.13304940465984552
         },
         {
           "id": 578,
           "text": " out",
-          "probability": 0.06183934795605511
+          "probability": 0.061839386557835024
         },
         {
           "id": 827,
           "text": " two",
-          "probability": 0.058777357418517785
+          "probability": 0.05877739410892106
         },
         {
           "id": 874,
           "text": " her",
-          "probability": 0.03400815568377196
+          "probability": 0.03400817691257505
         },
         {
           "id": 8698,
           "text": " herself",
-          "probability": 0.03281232488294995
+          "probability": 0.03281234536528338
         },
         {
           "id": 354,
           "text": " an",
-          "probability": 0.029737130735299176
+          "probability": 0.02973714929801392
         }
       ],
       "position": 36,
@@ -84,42 +85,42 @@
         {
           "id": 253,
           "text": " a",
-          "probability": 0.2524548359162124
+          "probability": 0.2524549935052934
         },
         {
           "id": 260,
           "text": " the",
-          "probability": 0.16230125094086398
+          "probability": 0.16230135225365877
         },
         {
           "id": 338,
           "text": " that",
-          "probability": 0.13304932160688976
+          "probability": 0.13304940465984552
         },
         {
           "id": 578,
           "text": " out",
-          "probability": 0.06183934795605511
+          "probability": 0.061839386557835024
         },
         {
           "id": 827,
           "text": " two",
-          "probability": 0.058777357418517785
+          "probability": 0.05877739410892106
         },
         {
           "id": 874,
           "text": " her",
-          "probability": 0.03400815568377196
+          "probability": 0.03400817691257505
         },
         {
           "id": 8698,
           "text": " herself",
-          "probability": 0.03281232488294995
+          "probability": 0.03281234536528338
         },
         {
           "id": 354,
           "text": " an",
-          "probability": 0.029737130735299176
+          "probability": 0.02973714929801392
         }
       ],
       "position": 36,
@@ -147,42 +148,42 @@
         {
           "id": 253,
           "text": " a",
-          "probability": 0.24221125370073415
+          "probability": 0.2422114010057278
         },
         {
           "id": 260,
           "text": " the",
-          "probability": 0.197169664167541
+          "probability": 0.19716978407970728
         },
         {
           "id": 338,
           "text": " that",
-          "probability": 0.1453103282255747
+          "probability": 0.14531041659858232
         },
         {
           "id": 578,
           "text": " out",
-          "probability": 0.07658177955958746
+          "probability": 0.07658182613413088
         },
         {
           "id": 827,
           "text": " two",
-          "probability": 0.04299028822553971
+          "probability": 0.042990314370832464
         },
         {
           "id": 8698,
           "text": " herself",
-          "probability": 0.03228171467300693
+          "probability": 0.03228173430569411
         },
         {
           "id": 805,
           "text": " only",
-          "probability": 0.027734204552504027
+          "probability": 0.027734221419543702
         },
         {
           "id": 874,
           "text": " her",
-          "probability": 0.02670509149296895
+          "probability": 0.026705107734135588
         }
       ],
       "position": 36,

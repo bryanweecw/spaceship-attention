@@ -59,3 +59,9 @@ vercel deploy --prebuilt --prod --scope bryanweecws-projects --yes
 ```
 
 Browser checks load the real model, generate, create a touch lock, check portrait overflow, reopen the cached model, and compare neutral / zero-bias / steered next-token distributions and measured attention. They also assert no inference `/api` requests. Results are stored in `evidence/browser-story-*-check.json`. The deployed smoke check is separate from local verification and physical-device validation.
+
+Desktop responsiveness: unchanged buffer refills reuse the existing model session and KV cache when no fan controls are active. Rewinds, changed attention locks, and fan-controlled refills rebuild context to preserve steering semantics. The tray reports `preparing` with elapsed time before the first token, then `generating`, `ready`, or `idle`. Generation errors stop automatic retries and remain visible. The runtime still uses single-threaded CPU WASM on desktop; it does not automatically select the native backend or GPU.
+
+`node tests/source-lifecycle.mjs` covers session reuse and invalidation. `node tests/desktop-story.mjs` exercises real desktop inference with the pinned model, refill reuse, waiting feedback, and regeneration after a rewind. `MODEL_URL` can point to a locally served copy for repeatable checks without another download.
+
+The story sampler excludes end-of-generation tokens so the raw story prefix keeps continuing; previously it could end after eight words and repeatedly retry the same ending. This is a sampling policy, separate from the attention bias. Rewind tracking now advances when streamed words become visible under a stationary knob, so dragging back across those words actually invalidates the future. Inference requests have a 120-second prefill / 30-second decode watchdog; a hung worker is terminated and the error asks for a reload.

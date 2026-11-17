@@ -1,0 +1,14 @@
+{
+  "url": "https://spaceship-iphone-story.vercel.app",
+  "deployment_id": "dpl_13Hfi8FPEz8PwRcvdTXFm8g1LkR3",
+  "state": "READY",
+  "target": "production",
+  "source_commit": "1747948",
+  "branch": "demo/iphone-story",
+  "hosting": "Vercel static Build Output API, no functions",
+  "unauthenticated_http_status": 200,
+  "hosted_webkit_model_test": "passed",
+  "local_chromium_touch_scrub": "passed",
+  "inference_backend": false,
+  "physical_iphone_16_tested": false
+}

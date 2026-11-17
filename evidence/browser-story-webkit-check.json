@@ -1,10 +1,11 @@
 {
-  "host": "http://127.0.0.1:8090",
+  "host": "https://spaceship-iphone-story.vercel.app",
   "backend": "real WASM SIMD in worker",
   "inference_api_requests": [],
   "browser_errors": [],
   "failed_requests": [],
   "touch_lock": true,
+  "touch_scrub": false,
   "portrait_overflow": false,
   "visible_text": "The spaceship carried two things: a \ngreenhouse full of roses and a \ndamaged engine. Mira loved the \ngarden, but the mechanic worried \nabout the reactor. When she opened \nthe hatch, she found a small, glowing \norb. What could it be?",
   "mechanism": {

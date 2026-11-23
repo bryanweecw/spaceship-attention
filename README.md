@@ -1,14 +1,30 @@
-# 🕹️ Spaceship IDE
+# Spaceship Attention
 
-## Browser writing demo for iPhone
+An extension of [Spaceship IDE](https://github.com/chuanqisun/spaceship) by **Chuanqi Sun**, adding actual model-attention interventions and local inference to the original interactive writing canvas.
 
-This branch preserves the original interface and runs the real attention-steering model on the device, with no inference backend. See [BROWSER_DEMO.md](BROWSER_DEMO.md) for the model download, touch controls, build, verification, and deployment. The story checkpoint and code-generation experiment remain on separate branches. Choose quantized Qwen2.5 0.5B (default) or the smaller SmolLM2 360M at startup. The canvas supports touch scrolling and edge scrolling while dragging. **Compose** adds editable documentation, proposal, email and custom prompts. Continue with the original prompt and steering, or add a new instruction for the next text; copy preserves paragraph breaks.
+**Original work:** the canvas, attention-lock interaction, scrub knob, fan controls, rail, visual design and original prompting mechanisms belong to Spaceship IDE. This fork preserves that lineage and the upstream [MIT license](LICENSE) and [citation](CITATION.cff).
 
-## Local llama.cpp attention demo
+**This extension:** a patched llama.cpp runtime applies signed additive bias to attention scores before softmax and captures final-layer attention. Native GGUF inference and a browser WebAssembly worker connect those mechanisms to the existing controls. Browser model choices, editable writing prompts, continuation/cancellation handling and touch navigation support the demo. Measured attention is model telemetry, not a causal explanation of reasoning. Buffered text invalidation is not draft/target speculative decoding, and no decoding speedup is claimed.
 
-This private derivative extends the original Spaceship canvas, attention locks, scrub knob, fan controls, and rail with real pre-softmax attention steering and measured attention from a local GGUF model. See [LOCAL_DEMO.md](LOCAL_DEMO.md) for setup, the intervention, scope, and verification. Run `bash scripts/setup-local.sh`, then `python3 native/server.py --model models/qwen2.5-0.5b-instruct-q4_k_m.gguf` and open http://127.0.0.1:8088.
+[Try the browser demo](https://spaceship.bryanweecw.com) · [Browser setup and limitations](BROWSER_DEMO.md) · [Native setup](LOCAL_DEMO.md)
 
-The original project and documentation follow.
+The browser downloads approximately 491 MB for Qwen2.5 0.5B, or 271 MB for SmolLM2 360M, then runs inference locally. Small model quality and latency vary by device. No server inference or shared API key is required for browser-model mode. Optional inherited cloud-provider modes send text to the provider when explicitly selected.
+
+## Development
+
+```sh
+npm ci
+npm run build
+npm run dev
+```
+
+The checked-in WebAssembly runtime is distributed with llama.cpp and bundled dependency notices in `public/runtime/`. To rebuild it, see `scripts/build-browser-runtime.sh` and the pinned revision in the runtime manifest. Model weights are downloaded separately and retain their own Apache-2.0 terms. The native patch is `patches/attention-bias.patch`.
+
+## Credits
+
+Chuanqi Sun created the original Spaceship IDE interaction and implementation. Bryan Wee's fork adds the model-runtime experiments described above; it does not claim authorship of the original interface. See upstream's citation below. The project license retains the upstream copyright notice; bundled runtime notices must also be preserved.
+
+---
 
 Steer your ideas in realtime, space pilot style!
 

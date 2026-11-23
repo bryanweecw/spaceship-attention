@@ -1,6 +1,8 @@
 # Browser writing demo
 
-Live: https://spaceship-iphone-story.vercel.app
+Live: https://spaceship.bryanweecw.com
+
+Public release (2026-11-23): Vercel production `dpl_PR68vr5AJMLSKMti8XG4gCwyeAKp` is READY and assigned to the custom domain. Anonymous HTTPS and real-Qwen Chromium browser checks passed on that domain: generation, touch lock, mobile layout, cached model reopen, neutral equivalence, changed next-token distribution under steering and measured attention. No inference API requests were made. This is automated browser evidence, not physical-phone validation. The earlier implementation history follows.
 
 Production deployment `dpl_HDirs4A68oLTKLBZbfh8JnAucVGM` is READY, from implementation commit `b0e4835`. The public URL returns HTTP 200 and serves the verified composer UI and runtime hashes. This revision passed local real-Qwen WebKit composer flows, document attention checks, blank-draft completion and preparation cancellation/recovery. Mobile gesture regressions passed in Chromium with the simulator. The hosted model flow was not rerun on this revision. Physical iPhone 16 behavior and performance remain unverified.
 

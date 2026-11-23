@@ -63,7 +63,8 @@ try {
     await page.mouse.up()
   }
   await page.waitForFunction(() => window.operations.filter((op) => op.op === "step" && op.ms).length >= 10, null, { timeout: 900000 })
-  await dragTo(48)
+  const requestedLine = 96
+  await dragTo(requestedLine)
   await page.mouse.move(50, 500)
   const timer = setInterval(
     async () => console.log(await page.locator("#status").textContent(), (await page.locator("#text").textContent()).split("\n").length),
@@ -83,7 +84,7 @@ try {
     clearInterval(timer)
   }
   const lines = (await page.locator("#text").textContent()).split("\n").length
-  assert.equal(lines, 49, "generation must reach the requested cursor line before filling the reserve")
+  assert.equal(lines, requestedLine + 1, "generation must reach the requested cursor line before filling the reserve")
   const before = await page.locator("#text").textContent()
   assert.deepEqual(errors, [])
   await mkdir(".capture-local/browser", { recursive: true })
@@ -103,9 +104,10 @@ try {
   const evidence = {
     engine,
     host: page.url(),
+    model_id: process.env.MODEL_ID ?? "qwen2.5-0.5b",
     waiting,
     errors,
-    requested_line: 48,
+    requested_line: requestedLine,
     reached_line: lines - 1,
     visible_text: before,
     shifts: shifts.length,
